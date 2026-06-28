@@ -145,6 +145,18 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
 .cal-cell.blank{visibility:hidden;cursor:default;}
 .cal-cell.today{border:2px solid var(--pink);}
 .cal-cell.has-event::after{content:'';position:absolute;bottom:3px;width:4px;height:4px;border-radius:50%;background:var(--calm);}
+/* ── GUIDE ── */
+.guide-tab{flex-shrink:0;background:none;border:none;border-bottom:2px solid transparent;color:var(--dim);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;padding:8px 12px;cursor:pointer;white-space:nowrap;transition:color .15s;}
+.guide-tab.active{color:var(--text);border-bottom-color:var(--pink);}
+.guide-tab:hover{color:var(--text);}
+.guide-page{display:none;padding:4px 0 8px;max-height:60dvh;overflow-y:auto;}
+.guide-page.active{display:block;}
+.guide-item{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);}
+.guide-item:last-child{border-bottom:none;}
+.guide-item-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.guide-item-title{font-size:13px;font-weight:500;margin-bottom:2px;}
+.guide-item-desc{font-size:11.5px;color:var(--dim);line-height:1.55;}
+.guide-tier{background:var(--panel2);border-radius:8px;padding:10px 12px;margin-bottom:6px;}
 @media(max-width:600px){
   .app{padding:10px 14px 60px;}
   .row{flex-direction:column;}.row>*{width:100%;}
@@ -200,6 +212,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <div class="brand-mark">Cheer<span class="cheer">Desk</span></div>
     <div style="display:flex;align-items:center;gap:10px;">
       <button id="pcAddBtn" onclick="openAddModal()">＋ 追加</button>
+      <button onclick="openGuide()" style="background:none;border:1px solid var(--border);color:var(--dim);border-radius:50%;width:32px;height:32px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Space Grotesk',sans-serif;font-weight:700;" title="使い方ガイド">?</button>
       <div class="live-dot" id="liveIndicator" onclick="switchTab('schedule')">
         <span class="dot"></span>
         <span id="liveText" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">確認中...</span>
@@ -398,6 +411,18 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <button class="primary" style="width:100%;" onclick="saveDisplayName()">表示名を保存</button>
   </div>
 
+  <!-- プロフィールページ -->
+  <div class="card">
+    <div class="card-hd">プロフィールページ <span style="font-size:10px;color:var(--calm);">公開URL</span></div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:10px;">あなたの推し活実績を公開ページとして共有できます。推しに見てもらいましょう！</div>
+    <div id="profileUrlBox" style="background:var(--panel2);border-radius:8px;padding:10px 12px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--calm);margin-bottom:10px;word-break:break-all;"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="ghost sm" onclick="copyProfileUrl()">URLコピー</button>
+      <button class="ghost sm" onclick="shareProfileToX()">𝕏 でシェア</button>
+      <button class="ghost sm" onclick="openProfilePreview()">プレビュー</button>
+    </div>
+  </div>
+
   <!-- 推し活スコア -->
   <div class="card">
     <div class="card-hd">推し活スコア <span style="font-size:10px;color:var(--dim);">今月</span></div>
@@ -467,7 +492,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
   <div class="card" style="border-color:rgba(155,138,251,.2);">
     <div class="card-hd">アカウント操作</div>
     <button class="ghost sm" onclick="signOut()">ログアウト</button>
-    <div style="font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace;margin-top:12px;">CheerDesk v0.2.0 · Supabase: lwbjidjidiulufoaumfl</div>
+    <div style="font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace;margin-top:12px;">CheerDesk v0.3.0 · Supabase: lwbjidjidiulufoaumfl</div>
   </div>
 </div>
 
@@ -542,23 +567,54 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <div class="modal-title">コメントを記録</div>
     <label>チャンネル</label>
     <select id="commentChannel"></select>
-    <label>動画タイトル</label>
-    <input type="text" id="commentVideoTitle" placeholder="配信・動画タイトル">
-    <label>コメント内容</label>
-    <textarea id="commentText" placeholder="送ったコメントを入力..." style="min-height:80px;"></textarea>
-    <label>種類</label>
-    <select id="commentType">
-      <option value="comment">💬 コメント</option>
-      <option value="superchat">💰 スパチャ</option>
-      <option value="bits">🎮 Bits（Twitch）</option>
-    </select>
-    <label>金額（スパチャの場合）</label>
-    <input type="number" id="commentAmount" placeholder="0" min="0">
-    <label>日時</label>
-    <input type="datetime-local" id="commentDate">
+
+    <!-- AIパースモード切替 -->
+    <div style="display:flex;gap:4px;background:var(--panel2);border-radius:8px;padding:3px;margin-bottom:10px;">
+      <div id="commentModeManual" class="auth-tab active" onclick="switchCommentMode('manual')" style="background:var(--pink);color:#fff;">手動入力</div>
+      <div id="commentModePaste" class="auth-tab" onclick="switchCommentMode('paste')">貼り付けAI解析</div>
+    </div>
+
+    <!-- 手動入力モード -->
+    <div id="commentManualMode">
+      <label>動画タイトル</label>
+      <input type="text" id="commentVideoTitle" placeholder="配信・動画タイトル">
+      <label>コメント内容</label>
+      <textarea id="commentText" placeholder="送ったコメントを入力..." style="min-height:80px;"></textarea>
+      <label>種類</label>
+      <select id="commentType">
+        <option value="comment">💬 コメント</option>
+        <option value="superchat">💰 スパチャ</option>
+        <option value="bits">🎮 Bits（Twitch）</option>
+      </select>
+      <label>金額（スパチャの場合）</label>
+      <input type="number" id="commentAmount" placeholder="0" min="0">
+      <label>日時</label>
+      <input type="datetime-local" id="commentDate">
+    </div>
+
+    <!-- AIパースモード -->
+    <div id="commentPasteMode" style="display:none;">
+      <div style="background:rgba(155,138,251,.08);border:1px solid rgba(155,138,251,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--purple);margin-bottom:10px;line-height:1.6;">
+        TikTok・ニコニコのコメント画面をスクショしてテキスト化、またはコメント一覧をそのままコピー＆ペーストしてください。AIが自動で解析します。
+      </div>
+      <label>プラットフォーム</label>
+      <select id="pasteplatform" style="margin-bottom:10px;">
+        <option value="tiktok">TikTok</option>
+        <option value="niconico">ニコニコ生放送</option>
+        <option value="other">その他</option>
+      </select>
+      <label>コメントデータを貼り付け</label>
+      <textarea id="commentPasteText" placeholder="コメント一覧をここに貼り付け...&#10;例）&#10;13:24 ありがとうございます！&#10;13:25 最高だった！&#10;13:26 ¥500 スパチャ送ります" style="min-height:120px;"></textarea>
+      <button class="primary full" id="parseBtn" onclick="parseCommentWithAI()" style="margin-bottom:10px;">AIで解析する ✨</button>
+      <div id="parseResult" style="display:none;">
+        <div style="font-size:11px;color:var(--dim);margin-bottom:6px;">解析結果（編集可能）</div>
+        <div id="parseResultList"></div>
+      </div>
+    </div>
+
     <div style="display:flex;gap:8px;margin-top:4px;">
       <button class="ghost" onclick="closeModal('addCommentModal')">キャンセル</button>
-      <button class="primary" style="flex:1;" onclick="addComment()">記録する</button>
+      <button class="primary" style="flex:1;" id="commentSubmitBtn" onclick="addComment()">記録する</button>
     </div>
   </div>
 </div>
@@ -584,6 +640,175 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
       <button class="ghost" onclick="closeModal('addScheduleModal')">キャンセル</button>
       <button class="primary" style="flex:1;" onclick="addSchedule()">追加する</button>
     </div>
+  </div>
+</div>
+
+<!-- オンボーディング（初回のみ） -->
+<div id="onboardingScreen" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:20px;width:100%;max-width:400px;padding:28px 24px;text-align:center;">
+    <div id="obStep1">
+      <div style="font-size:40px;margin-bottom:12px;">💜</div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px;">CheerDeskへようこそ！</div>
+      <div style="font-size:13px;color:var(--dim);line-height:1.7;margin-bottom:24px;">推しを、もっと近くに。<br>まずは推しのチャンネルを登録しましょう。</div>
+      <div style="display:flex;flex-direction:column;gap:10px;text-align:left;margin-bottom:24px;">
+        <div style="display:flex;gap:12px;align-items:flex-start;background:var(--panel2);border-radius:10px;padding:12px;">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--pink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">1</div>
+          <div><div style="font-size:13px;font-weight:500;">推しを登録する</div><div style="font-size:11px;color:var(--dim);margin-top:2px;">YouTube・Twitch・TikTok・ニコニコに対応</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;background:var(--panel2);border-radius:10px;padding:12px;">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--purple);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">2</div>
+          <div><div style="font-size:13px;font-weight:500;">推し活を記録する</div><div style="font-size:11px;color:var(--dim);margin-top:2px;">視聴・グッズ・スパチャをログとして残す</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;background:var(--panel2);border-radius:10px;padding:12px;">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--calm);color:#0B231C;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">3</div>
+          <div><div style="font-size:13px;font-weight:500;">応援を届ける</div><div style="font-size:11px;color:var(--dim);margin-top:2px;">スタンプや応援レターで気持ちを伝える</div></div>
+        </div>
+      </div>
+      <button class="primary full" style="font-size:15px;padding:14px;" onclick="finishOnboarding()">推しを登録する →</button>
+      <button class="link-btn" style="display:block;margin:12px auto 0;font-size:12px;" onclick="skipOnboarding()">後で設定する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ガイドモーダル -->
+<div class="modal-overlay" id="guideModal">
+  <div class="modal-box center" style="max-width:560px;">
+    <div class="modal-handle"></div>
+    <div style="font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;margin-bottom:12px;">使い方ガイド</div>
+    <!-- ガイドタブ -->
+    <div style="display:flex;gap:0;overflow-x:auto;border-bottom:1px solid var(--border);margin:0 -20px;padding:0 14px;scrollbar-width:none;" id="guideTabs">
+      <button class="guide-tab active" onclick="switchGuide('home',this)">ホーム</button>
+      <button class="guide-tab" onclick="switchGuide('channels',this)">推しリスト</button>
+      <button class="guide-tab" onclick="switchGuide('schedule',this)">スケジュール</button>
+      <button class="guide-tab" onclick="switchGuide('logs',this)">推し活ログ</button>
+      <button class="guide-tab" onclick="switchGuide('comments',this)">コメント</button>
+      <button class="guide-tab" onclick="switchGuide('cheer',this)">応援</button>
+      <button class="guide-tab" onclick="switchGuide('plan',this)">プラン</button>
+    </div>
+
+    <!-- ホーム -->
+    <div class="guide-page active" id="guide-home">
+      <div style="font-size:15px;font-weight:600;margin:16px 0 8px;display:flex;align-items:center;gap:8px;">🏠 ホーム</div>
+      <p style="font-size:13px;color:var(--dim2);line-height:1.75;margin-bottom:12px;">推しのLIVE状況・今日の配信予定・最近の推し活ログを一目で確認できます。記念日（推し歴1ヶ月・1周年など）はホームにバナー表示されます。</p>
+      <div class="guide-item">
+        <div class="guide-item-icon" style="background:rgba(255,107,91,.12);">🔴</div>
+        <div><div class="guide-item-title">LIVEバナー</div><div class="guide-item-desc">推し（⭐ティア）がLIVE中のとき画面上部に表示されます。</div></div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-item-icon" style="background:rgba(242,184,75,.12);">🎊</div>
+        <div><div class="guide-item-title">記念日バナー</div><div class="guide-item-desc">推し始めて1週間・1ヶ月・100日・1周年などの当日に表示されます。</div></div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-item-icon" style="background:rgba(69,214,176,.12);">📊</div>
+        <div><div class="guide-item-title">今月のサマリー</div><div class="guide-item-desc">「生成」ボタンで今月の推し活をXにシェアできるテキストにまとめます。</div></div>
+      </div>
+    </div>
+
+    <!-- 推しリスト -->
+    <div class="guide-page" id="guide-channels">
+      <div style="font-size:15px;font-weight:600;margin:16px 0 8px;display:flex;align-items:center;gap:8px;">⭐ 推しリスト</div>
+      <p style="font-size:13px;color:var(--dim2);line-height:1.75;margin-bottom:12px;">チャンネルを3つのティアで管理します。ティアによって機能と通知が変わります。</p>
+      <div class="guide-tier">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span class="tag oshi">⭐ 推し</span><span style="font-size:13px;font-weight:500;">フル機能・全通知</span></div>
+        <div style="font-size:12px;color:var(--dim);line-height:1.6;">配信通知・推し活ログ・コメント履歴・応援スタンプ・ファンカード生成。フリー1人・スタンダード5人・プレミアム無制限。</div>
+      </div>
+      <div class="guide-tier">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span class="tag watch">👁 ウォッチ</span><span style="font-size:13px;font-weight:500;">通知のみ</span></div>
+        <div style="font-size:12px;color:var(--dim);line-height:1.6;">配信・新動画の通知を受け取れます。全プランで無制限に登録できます。</div>
+      </div>
+      <div class="guide-tier">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span class="tag know">📌 知っている</span><span style="font-size:13px;font-weight:500;">記録のみ</span></div>
+        <div style="font-size:12px;color:var(--dim);line-height:1.6;">「知っている」として記録しておくだけ。通知なし。全プランで無制限に登録できます。</div>
+      </div>
+      <div style="background:rgba(224,98,158,.08);border:1px solid rgba(224,98,158,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--pink);margin-top:10px;line-height:1.6;">
+        💡 チャンネルをタップするとティア変更・通知設定・ファンカード生成ができます。
+      </div>
+    </div>
+
+    <!-- スケジュール -->
+    <div class="guide-page" id="guide-schedule">
+      <div style="font-size:15px;font-weight:600;margin:16px 0 8px;display:flex;align-items:center;gap:8px;">📅 スケジュール</div>
+      <p style="font-size:13px;color:var(--dim2);line-height:1.75;margin-bottom:12px;">推しの配信・動画投稿予定をカレンダーで確認できます。</p>
+      <div class="guide-item">
+        <div class="guide-item-icon" style="background:rgba(69,214,176,.12);">📅</div>
+        <div><div class="guide-item-title">カレンダー表示</div><div class="guide-item-desc">予定がある日に緑のドットが付きます。日付をタップするとその日の予定だけ表示されます。</div></div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-item-icon" style="background:rgba(91,157,239,.12);">＋</div>
+        <div><div class="guide-item-title">手動追加</div><div class="guide-item-desc">推しがスケジュールを告知したら「＋ 手動追加」から登録できます。将来的にはPubSubHubbubで自動取得予定です。</div></div>
+      </div>
+    </div>
+
+    <!-- 推し活ログ -->
+    <div class="guide-page" id="guide-logs">
+      <div style="font-size:15px;font-weight:600;margin:16px 0 8px;display:flex;align-items:center;gap:8px;">📝 推し活ログ</div>
+      <p style="font-size:13px;color:var(--dim2);line-height:1.75;margin-bottom:12px;">視聴・グッズ購入・スパチャ・イベント参加などの推し活を記録します。スタンダード以上のプランで利用できます。</p>
+      <div class="guide-item">
+        <div class="guide-item-icon" style="background:rgba(69,214,176,.12);">🎮</div>
+        <div><div class="guide-item-title">配信視聴ログ</div><div class="guide-item-desc">配信を見たら記録。積み上げることで推し活スコアに反映されます。</div></div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-item-icon" style="background:rgba(242,184,75,.12);">🛍</div>
+        <div><div class="guide-item-title">グッズ・費用記録</div><div class="guide-item-desc">グッズ購入・イベント参加費などを記録。月次・年間の費用グラフに反映されます。</div></div>
+      </div>
+      <div style="background:rgba(242,184,75,.08);border:1px solid rgba(242,184,75,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--gold);margin-top:10px;line-height:1.6;">
+        💡 年間費用グラフはプレミアムプランで見られます。設定タブのPDF出力でレポートも作成できます。
+      </div>
+    </div>
+
+    <!-- コメント -->
+    <div class="guide-page" id="guide-comments">
+      <div style="font-size:15px;font-weight:600;margin:16px 0 8px;display:flex;align-items:center;gap:8px;">💬 コメント履歴</div>
+      <p style="font-size:13px;color:var(--dim2);line-height:1.75;margin-bottom:12px;">推しへのコメント・スパチャ・Bitsの履歴を記録します。プレミアムプランの機能です。</p>
+      <div class="guide-item">
+        <div class="guide-item-icon" style="background:rgba(224,98,158,.12);">🎉</div>
+        <div><div class="guide-item-title">初コメント検出</div><div class="guide-item-desc">そのチャンネルへの最初のコメントを自動で「初コメント」として記録します。記念日として大切にできます。</div></div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-item-icon" style="background:rgba(242,184,75,.12);">💰</div>
+        <div><div class="guide-item-title">スパチャ記録</div><div class="guide-item-desc">スパチャ・Bitsの金額を記録してスパチャ合計を管理できます。</div></div>
+      </div>
+      <div style="background:rgba(155,138,251,.08);border:1px solid rgba(155,138,251,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--purple);margin-top:10px;line-height:1.6;">
+        🔧 将来実装予定：Chrome拡張でコメントを自動キャプチャできるようになります。
+      </div>
+    </div>
+
+    <!-- 応援 -->
+    <div class="guide-page" id="guide-cheer">
+      <div style="font-size:15px;font-weight:600;margin:16px 0 8px;display:flex;align-items:center;gap:8px;">📣 応援</div>
+      <p style="font-size:13px;color:var(--dim2);line-height:1.75;margin-bottom:12px;">スタンプや応援レターで推しへの気持ちを記録します。</p>
+      <div class="guide-item">
+        <div class="guide-item-icon" style="background:rgba(224,98,158,.12);">💜</div>
+        <div><div class="guide-item-title">応援スタンプ</div><div class="guide-item-desc">8種類のスタンプで気持ちを記録。累計カウントが表示されます。フリープランは月3回まで。</div></div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-item-icon" style="background:rgba(155,138,251,.12);">💌</div>
+        <div><div class="guide-item-title">応援レター</div><div class="guide-item-desc">推しへのメッセージを自由に記録。匿名設定も可能。不適切な言葉は送信できません。</div></div>
+      </div>
+    </div>
+
+    <!-- プラン -->
+    <div class="guide-page" id="guide-plan">
+      <div style="font-size:15px;font-weight:600;margin:16px 0 8px;display:flex;align-items:center;gap:8px;">💳 プランについて</div>
+      <p style="font-size:13px;color:var(--dim2);line-height:1.75;margin-bottom:12px;">CheerDeskは3つのプランで提供しています。Chrome拡張インストールで割引が適用されます。</p>
+      <div class="guide-tier" style="margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px;">🌱 フリー ¥0</div>
+        <div style="font-size:12px;color:var(--dim);line-height:1.6;">推し1人・スケジュール・応援スタンプ（月3回）・ファンカード</div>
+      </div>
+      <div class="guide-tier" style="margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px;color:var(--calm);">⭐ スタンダード ¥780〜</div>
+        <div style="font-size:12px;color:var(--dim);line-height:1.6;">推し5人・推し活ログ・無制限スタンプ・推し活スコア。年払い¥580・拡張割引あり。</div>
+      </div>
+      <div class="guide-tier">
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px;color:var(--gold);">💎 プレミアム ¥1,580〜</div>
+        <div style="font-size:12px;color:var(--dim);line-height:1.6;">推し無制限・コメント履歴・年間グラフ・PDF出力。年払い+拡張で¥980。</div>
+      </div>
+      <div style="background:rgba(69,214,176,.08);border:1px solid rgba(69,214,176,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--calm);margin-top:10px;line-height:1.6;">
+        💡 Chrome拡張をインストールすると割引が適用されます。PCで一度認証すればスマホでも有効です。
+      </div>
+    </div>
+
+    <button class="ghost full" style="margin-top:16px;" onclick="closeModal('guideModal')">閉じる</button>
   </div>
 </div>
 
@@ -649,6 +874,10 @@ async function onLogin(u){
     const nb=document.getElementById('notifBtn');
     if(nb&&Notification.permission==='granted')nb.textContent='✓ プッシュ通知 有効';
   }
+  // 初回オンボーディング
+  checkOnboarding();
+  // プロフィールURL初期化
+  initProfileUrl();
 }
 function showAuth(){CU=null;document.getElementById('authScreen').style.display='flex';document.getElementById('appScreen').style.display='none';}
 
@@ -1016,7 +1245,264 @@ function updatePlanUI(ud){
   if(pi)pi.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;"><span style="font-size:15px;font-weight:600;">${pn[ud.plan||'free']}</span><span style="font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--pink);color:var(--pink);font-family:'IBM Plex Mono',monospace;">${ud.billing_cycle==='annual'?'年払い':'月払い'}</span>${ud.extension_verified?'<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(69,214,176,.12);color:var(--calm);border:1px solid rgba(69,214,176,.3);">拡張割引 適用中</span>':''}</div>`;
   if(es)es.innerHTML=ud.extension_verified?`<span style="color:var(--calm);">✓</span> Chrome拡張がインストール済みです。拡張割引が適用されています。<br><button class="link-btn" style="margin-top:6px;" onclick="revokeExt()">割引を解除する</button>`:`Chrome拡張をインストールすると月額が割引されます。`;
 }
-async function revokeExt(){
+// ── コメントモード切替 ──
+function switchCommentMode(mode){
+  const isManual=mode==='manual';
+  document.getElementById('commentManualMode').style.display=isManual?'block':'none';
+  document.getElementById('commentPasteMode').style.display=isManual?'none':'block';
+  document.getElementById('commentModeManual').className='auth-tab'+(isManual?' active':'');
+  document.getElementById('commentModePaste').className='auth-tab'+(!isManual?' active':'');
+  if(isManual){
+    document.getElementById('commentModeManual').style.background='var(--pink)';
+    document.getElementById('commentModeManual').style.color='#fff';
+    document.getElementById('commentModePaste').style.background='';
+    document.getElementById('commentModePaste').style.color='';
+  } else {
+    document.getElementById('commentModePaste').style.background='var(--pink)';
+    document.getElementById('commentModePaste').style.color='#fff';
+    document.getElementById('commentModeManual').style.background='';
+    document.getElementById('commentModeManual').style.color='';
+  }
+  document.getElementById('commentSubmitBtn').textContent=isManual?'記録する':'選択して一括記録';
+  document.getElementById('commentSubmitBtn').onclick=isManual?addComment:addParsedComments;
+}
+
+// ── AIパース（Claude APIを使用） ──
+let parsedComments=[];
+async function parseCommentWithAI(){
+  const text=document.getElementById('commentPasteText').value.trim();
+  const platform=document.getElementById('pasteplatform').value;
+  if(!text){toast('テキストを貼り付けてください');return;}
+  const btn=document.getElementById('parseBtn');
+  btn.disabled=true;btn.textContent='解析中...';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        messages:[{role:'user',content:`以下は${platform}のコメント一覧テキストです。JSONのみで返してください（前置き・説明不要）。
+形式: [{"text":"コメント内容","type":"comment|superchat","amount":金額または0,"time":"時刻文字列"}]
+スパチャ・投げ銭・金額が含まれる行はtypeをsuperchatにしてamountに数値を入れてください。
+テキスト:
+${text}`}]
+      })
+    });
+    const data=await res.json();
+    const raw=data.content?.[0]?.text||'[]';
+    const clean=raw.replace(/```json|```/g,'').trim();
+    parsedComments=JSON.parse(clean);
+    renderParseResult();
+  }catch(e){
+    toast('解析に失敗しました。手動入力をお試しください。');
+    console.error(e);
+  }
+  btn.disabled=false;btn.textContent='AIで解析する ✨';
+}
+
+function renderParseResult(){
+  const el=document.getElementById('parseResultList');
+  const wrap=document.getElementById('parseResult');
+  if(!parsedComments.length){el.innerHTML='<div style="font-size:12px;color:var(--dim);">コメントが見つかりませんでした</div>';wrap.style.display='block';return;}
+  el.innerHTML=parsedComments.map((c,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+      <input type="checkbox" id="pc${i}" checked style="width:auto;min-height:auto;flex-shrink:0;accent-color:var(--pink);">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.text)}</div>
+        <div style="font-size:10px;color:var(--dim);">${c.type==='superchat'?'💰 ¥'+c.amount:' 💬 コメント'} ${c.time?'· '+c.time:''}</div>
+      </div>
+    </div>`).join('');
+  wrap.style.display='block';
+  toast(`✓ ${parsedComments.length}件のコメントを検出しました`);
+}
+
+async function addParsedComments(){
+  const cid=document.getElementById('commentChannel').value;
+  if(!cid){toast('チャンネルを選択してください');return;}
+  const pf=document.getElementById('pasteplatform').value;
+  const checked=parsedComments.filter((_,i)=>document.getElementById('pc'+i)?.checked);
+  if(!checked.length){toast('記録するコメントを選択してください');return;}
+  // 初コメントチェック
+  const{data:ex}=await sb.from('comment_logs').select('id').eq('user_id',CU.id).eq('channel_id',cid).limit(1);
+  let isFirst=!ex?.length;
+  const inserts=checked.map((c,i)=>({
+    user_id:CU.id,channel_id:cid,platform:pf,source:'manual',
+    comment_text:c.text,comment_type:c.type||'comment',
+    amount:c.amount||null,commented_at:new Date().toISOString(),
+    is_first_comment:isFirst&&i===0
+  }));
+  const{error}=await sb.from('comment_logs').insert(inserts);
+  if(error){toast('記録に失敗しました');return;}
+  closeModal('addCommentModal');
+  toast(`✓ ${inserts.length}件のコメントを記録しました${isFirst?'（初コメント🎉）':''}`);
+  document.getElementById('commentPasteText').value='';
+  parsedComments=[];
+  document.getElementById('parseResult').style.display='none';
+  loadComments();
+}
+
+// ── SNS共有画像生成（Canvas） ──
+async function generateShareImage(ucId){
+  const uc=AChans.find(c=>c.id===ucId);if(!uc)return;
+  const ch=uc.channels;const days=calcDays(uc.followed_since);
+  const[{data:logs},{data:cheers}]=await Promise.all([
+    sb.from('cheer_logs').select('amount').eq('user_id',CU.id).eq('channel_id',uc.channel_id),
+    sb.from('cheer_messages').select('id').eq('user_id',CU.id).eq('channel_id',uc.channel_id)
+  ]);
+  const {data:ud}=await sb.from('users').select('display_name').eq('id',CU.id).single();
+  const fanName=ud?.display_name||CU.email?.split('@')[0]||'ファン';
+  const totalAmt=(logs||[]).reduce((s,l)=>s+(l.amount||0),0);
+
+  const canvas=document.createElement('canvas');
+  canvas.width=800;canvas.height=420;
+  const ctx=canvas.getContext('2d');
+
+  // 背景グラデーション
+  const grad=ctx.createLinearGradient(0,0,800,420);
+  grad.addColorStop(0,'#12131A');grad.addColorStop(1,'#20152A');
+  ctx.fillStyle=grad;ctx.fillRect(0,0,800,420);
+
+  // ピンクの装飾円
+  ctx.beginPath();ctx.arc(720,60,100,0,Math.PI*2);
+  ctx.fillStyle='rgba(224,98,158,0.08)';ctx.fill();
+  ctx.beginPath();ctx.arc(80,360,80,0,Math.PI*2);
+  ctx.fillStyle='rgba(155,138,251,0.06)';ctx.fill();
+
+  // ピンクのアクセントライン
+  ctx.fillStyle='#E0629E';ctx.fillRect(50,50,4,320);
+
+  // FAN CARDラベル
+  ctx.fillStyle='#E0629E';ctx.font='500 13px IBM Plex Mono, monospace';
+  ctx.fillText('FAN CARD',70,80);
+
+  // チャンネル名
+  ctx.fillStyle='#ECE9E2';ctx.font='700 32px Space Grotesk, sans-serif';
+  ctx.fillText(ch.name.length>18?ch.name.slice(0,18)+'...':ch.name,70,130);
+
+  // ファン名
+  ctx.fillStyle='#8C8FA3';ctx.font='400 16px Inter, sans-serif';
+  ctx.fillText(fanName+' のファンカード',70,165);
+
+  // 区切り線
+  ctx.strokeStyle='#2A2D3A';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(70,185);ctx.lineTo(730,185);ctx.stroke();
+
+  // スタッツ
+  const stats=[
+    {label:'推し歴',value:days!==null?days+'日':'?',color:'#F2B84B'},
+    {label:'推し活ログ',value:(logs||[]).length+'件',color:'#45D6B0'},
+    {label:'推し活費用',value:'¥'+totalAmt.toLocaleString(),color:'#E0629E'},
+    {label:'応援送信',value:(cheers||[]).length+'回',color:'#9B8AFB'},
+  ];
+  stats.forEach((s,i)=>{
+    const x=70+(i*168);const y=210;
+    // カード背景
+    ctx.fillStyle='rgba(255,255,255,0.04)';
+    roundRect(ctx,x,y,150,100,8);ctx.fill();
+    // 数値
+    ctx.fillStyle=s.color;ctx.font='700 26px IBM Plex Mono, monospace';
+    ctx.fillText(s.value,x+12,y+48);
+    // ラベル
+    ctx.fillStyle='#8C8FA3';ctx.font='400 13px Inter, sans-serif';
+    ctx.fillText(s.label,x+12,y+78);
+  });
+
+  // フッター
+  ctx.fillStyle='#2A2D3A';ctx.fillRect(50,340,700,1);
+  ctx.fillStyle='#8C8FA3';ctx.font='400 13px IBM Plex Mono, monospace';
+  const now=new Date();
+  ctx.fillText('CheerDesk · '+now.getFullYear()+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0'),70,375);
+  ctx.fillStyle='#E0629E';ctx.font='700 13px Space Grotesk, sans-serif';
+  ctx.fillText('cheerdesk.pages.dev',580,375);
+
+  // ダウンロード
+  const a=document.createElement('a');
+  a.download=`fancard_${ch.name}_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}.png`;
+  a.href=canvas.toDataURL('image/png');
+  a.click();
+  toast('✓ 画像を保存しました');
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+// ── プロフィールページ ──
+function getProfileUrl(){
+  const uid=CU?.id?.slice(0,8)||'unknown';
+  return`${location.origin}${location.pathname}?profile=${uid}`;
+}
+function initProfileUrl(){
+  const el=document.getElementById('profileUrlBox');
+  if(el)el.textContent=getProfileUrl();
+}
+function copyProfileUrl(){
+  navigator.clipboard.writeText(getProfileUrl()).then(()=>toast('✓ URLをコピーしました'));
+}
+function shareProfileToX(){
+  const {data:ud}=sb.from('users').select('display_name').eq('id',CU.id).single();
+  const url=getProfileUrl();
+  const text=`CheerDeskで推し活記録を公開中！\n${url}\n#CheerDesk #推し活`;
+  window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(text),'_blank');
+}
+async function openProfilePreview(){
+  const{data:ud}=await sb.from('users').select('*').eq('id',CU.id).single();
+  const{data:oshi}=await sb.from('user_channels').select('*,channels(*)').eq('user_id',CU.id).eq('tier','oshi');
+  const{data:logs}=await sb.from('cheer_logs').select('amount').eq('user_id',CU.id);
+  const{data:cheers}=await sb.from('cheer_messages').select('id').eq('user_id',CU.id);
+  const fanName=ud?.display_name||CU.email?.split('@')[0]||'ファン';
+  const totalAmt=(logs||[]).reduce((s,l)=>s+(l.amount||0),0);
+  const now=new Date();
+  // プロフィールカードをモーダルで表示
+  const modal=document.getElementById('fanCardModal');
+  document.getElementById('fanCardContent').innerHTML=`
+    <div style="background:linear-gradient(135deg,#1A1C26 0%,#20152A 100%);border:1px solid var(--pink);border-radius:16px;padding:24px;">
+      <div style="text-align:center;margin-bottom:16px;">
+        <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--purple));display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 8px;">👤</div>
+        <div style="font-size:17px;font-weight:700;">${esc(fanName)}</div>
+        <div style="font-size:11px;color:var(--dim);margin-top:2px;">CheerDesk ファンページ</div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--dim);letter-spacing:.5px;font-weight:600;margin-bottom:8px;">推しリスト</div>
+        ${(oshi||[]).slice(0,5).map(uc=>{
+          const days=calcDays(uc.followed_since);
+          return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:15px;">${pfIcon(uc.channels.platform)}</span>
+            <span style="font-size:13px;font-weight:500;flex:1;">${esc(uc.channels.name)}</span>
+            ${daysBadge(days)}
+          </div>`;
+        }).join('')}
+        ${(oshi||[]).length===0?'<div style="font-size:12px;color:var(--dim);text-align:center;padding:8px;">推しを登録してみましょう</div>':''}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;">
+        <div style="background:rgba(255,255,255,.05);border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-size:18px;font-weight:500;color:var(--calm);">${(logs||[]).length}</div>
+          <div style="font-size:10px;color:var(--dim);">ログ</div>
+        </div>
+        <div style="background:rgba(255,255,255,.05);border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-size:18px;font-weight:500;color:var(--gold);">¥${totalAmt.toLocaleString()}</div>
+          <div style="font-size:10px;color:var(--dim);">費用</div>
+        </div>
+        <div style="background:rgba(255,255,255,.05);border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-size:18px;font-weight:500;color:var(--purple);">${(cheers||[]).length}</div>
+          <div style="font-size:10px;color:var(--dim);">応援</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--dim);text-align:center;border-top:1px solid var(--border);padding-top:10px;">CheerDesk · ${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="ghost" style="flex:1;" onclick="copyProfileUrl();toast('✓ URLをコピーしました')">URLコピー</button>
+      <button class="ghost" style="flex:1;" onclick="shareProfileToX()">𝕏 でシェア</button>
+    </div>`;
+  openModal('fanCardModal');
+}
+
+// ── 通知許可 ──
   if(!confirm('拡張割引を解除しますか？翌月から通常料金になります。'))return;
   await sb.from('users').update({extension_verified:false,extension_verified_at:null}).eq('id',CU.id);
   toast('✓ 拡張割引を解除しました');
@@ -1194,6 +1680,44 @@ async function generatePDF(){
   toast('✓ 印刷画面を開きました。「PDFとして保存」を選択してください。');
 }
 
+// ── オンボーディング ──
+function checkOnboarding(){
+  if(!localStorage.getItem('cd_onboarded')){
+    document.getElementById('onboardingScreen').style.display='flex';
+  }
+}
+function finishOnboarding(){
+  localStorage.setItem('cd_onboarded','1');
+  document.getElementById('onboardingScreen').style.display='none';
+  switchTab('channels');
+  setTimeout(()=>openAddChannelModal(),300);
+}
+function skipOnboarding(){
+  localStorage.setItem('cd_onboarded','1');
+  document.getElementById('onboardingScreen').style.display='none';
+}
+
+// ── ガイドモーダル ──
+function openGuide(){
+  // 現在のタブに合わせてガイドを開く
+  const tabMap={home:'home',channels:'channels',schedule:'schedule',logs:'logs',comments:'comments',cheer:'cheer',settings:'plan'};
+  const target=tabMap[CTab]||'home';
+  document.querySelectorAll('.guide-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.guide-page').forEach(p=>p.classList.remove('active'));
+  const targetTab=document.querySelector(`.guide-tab[onclick*="'${target}'"]`);
+  if(targetTab)targetTab.classList.add('active');
+  const targetPage=document.getElementById('guide-'+target);
+  if(targetPage)targetPage.classList.add('active');
+  openModal('guideModal');
+}
+function switchGuide(id,btn){
+  document.querySelectorAll('.guide-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.guide-page').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  const page=document.getElementById('guide-'+id);
+  if(page)page.classList.add('active');
+}
+
 // ── 不適切言葉フィルター ──
 const NG=['死ね','殺す','殺して','うざい','きもい','消えろ','死んで','クズ','ゴミ','氏ね','カス','うせろ','死ろ','ころす','しね'];
 function filterText(text){
@@ -1261,8 +1785,9 @@ async function openFanCard(ucId){
       <div style="font-size:11px;color:var(--dim);border-top:1px solid var(--border);padding-top:10px;">${esc(fanName)} · ${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}</div>
     </div>
     <div style="display:flex;gap:8px;margin-top:12px;">
-      <button class="ghost" style="flex:1;" onclick="shareToX('${esc(ch.name).replace(/'/g,"\\'")}',${days??0},${(logs||[]).length},${totalAmt})">𝕏 でシェア</button>
-      <button class="ghost" style="flex:1;" onclick="copyCardText('${esc(ch.name).replace(/'/g,"\\'")}',${days??0},${(logs||[]).length},${totalAmt})">テキストコピー</button>
+      <button class="ghost" style="flex:1;" onclick='shareToX(${JSON.stringify(ch.name)},${days??0},${(logs||[]).length},${totalAmt})'>𝕏 でシェア</button>
+      <button class="ghost" style="flex:1;" onclick='copyCardText(${JSON.stringify(ch.name)},${days??0},${(logs||[]).length},${totalAmt})'>テキストコピー</button>
+      <button class="ghost" style="flex:1;" onclick='generateShareImage("${ucId}")'>画像保存</button>
     </div>`;
   openModal('fanCardModal');
 }
