@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="ja" translate="no">
+<head>
+<meta charset="UTF-8">
+<meta name="google" content="notranslate">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CheerDesk</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8"></script>
+<style>
+:root{
+  --bg:#12131A;--panel:#1A1C26;--panel2:#20222E;--border:#2A2D3A;
+  --text:#ECE9E2;--dim:#8C8FA3;--dim2:#ABAEC0;
+  --live:#FF6B5B;--calm:#45D6B0;--gold:#F2B84B;
+  --blue:#5B9DEF;--pink:#E0629E;--purple:#9B8AFB;--green:#6FCF73;
+  --topnav-h:48px;--safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
+#authScreen{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px;}
+#appScreen{display:none;}
+.auth-box{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:32px 24px;}
+.auth-box .mark{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;text-align:center;margin-bottom:4px;}
+.auth-box .cheer{color:var(--pink);}
+.auth-box .sub{font-size:12px;color:var(--dim);text-align:center;margin-bottom:24px;}
+.auth-tabs{display:flex;gap:4px;margin-bottom:18px;background:var(--panel2);border-radius:8px;padding:3px;}
+.auth-tab{flex:1;text-align:center;padding:9px;border-radius:6px;font-size:13px;color:var(--dim);cursor:pointer;}
+.auth-tab.active{background:var(--pink);color:#fff;font-weight:600;}
+.auth-msg{font-size:12px;color:var(--live);margin:-2px 0 10px;}
+.auth-msg.ok{color:var(--calm);}
+#topHeader{position:sticky;top:0;z-index:90;background:rgba(18,19,26,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
+.top-bar{max-width:960px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding:10px 16px 0;}
+.brand-mark{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;letter-spacing:1px;}
+.brand-mark .cheer{color:var(--pink);}
+.live-dot{display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);cursor:pointer;max-width:160px;overflow:hidden;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--live);flex-shrink:0;animation:pulse 1.8s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,107,91,.45);}70%{box-shadow:0 0 0 6px rgba(255,107,91,0);}100%{box-shadow:0 0 0 0 rgba(255,107,91,0);}}
+#topNav{max-width:960px;margin:0 auto;display:flex;overflow-x:auto;gap:0;padding:0 12px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+#topNav::-webkit-scrollbar{display:none;}
+#topNav button{flex-shrink:0;background:none;border:none;border-bottom:2px solid transparent;color:var(--dim);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:10px 12px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;transition:color .15s;min-height:var(--topnav-h);}
+#topNav button .ni{font-size:14px;}
+#topNav button.active{color:var(--text);border-bottom-color:var(--pink);}
+#topNav button:hover{color:var(--text);}
+.app{max-width:680px;margin:0 auto;padding:12px 16px 60px;}
+.panel-view{display:none;}.panel-view.active{display:block;}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;position:relative;}
+.card-hd{font-size:11px;color:var(--dim);letter-spacing:.5px;font-weight:600;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.stat-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:4px;}
+.stat-row-4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.stat{background:var(--panel2);border-radius:10px;padding:12px;}
+.stat .num{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:500;}
+.stat .lbl{font-size:11px;color:var(--dim);margin-top:2px;}
+button.primary{background:var(--pink);color:#fff;border:none;border-radius:10px;font-weight:600;font-size:14px;padding:13px 18px;cursor:pointer;font-family:'Inter',sans-serif;min-height:44px;}
+button.primary:hover{opacity:.9;}button.primary:disabled{opacity:.5;cursor:default;}
+button.primary.full{width:100%;}
+button.ghost{background:var(--panel2);border:1px solid var(--border);color:var(--dim2);border-radius:10px;font-size:13px;padding:10px 14px;cursor:pointer;font-family:'Inter',sans-serif;min-height:44px;}
+button.ghost:hover{color:var(--text);border-color:var(--dim);}
+button.ghost.sm{font-size:12px;padding:7px 12px;min-height:36px;}
+.link-btn{color:var(--calm);font-size:12px;cursor:pointer;background:none;border:none;font-family:'Inter',sans-serif;padding:0;}
+label{font-size:12px;color:var(--dim);display:block;margin-bottom:4px;}
+input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;padding:11px 12px;margin-bottom:10px;min-height:44px;-webkit-appearance:none;}
+textarea{resize:vertical;min-height:72px;}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-offset:0;}
+.row{display:flex;gap:10px;}.row>*{flex:1;}
+.tag{font-size:10px;padding:2px 8px;border-radius:20px;font-family:'IBM Plex Mono',monospace;border:1px solid var(--border);color:var(--dim2);white-space:nowrap;flex-shrink:0;}
+.tag.oshi{border-color:var(--pink);color:var(--pink);}
+.tag.watch{border-color:var(--blue);color:var(--blue);}
+.tag.know{border-color:var(--border);color:var(--dim);}
+.li{padding:12px 0;border-bottom:1px solid var(--border);}
+.li:last-child{border-bottom:none;}
+.li-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.li-main{flex:1;min-width:0;}
+.li-title{font-size:13.5px;font-weight:500;margin-bottom:2px;}
+.li-meta{font-size:11.5px;color:var(--dim2);font-family:'IBM Plex Mono',monospace;}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--panel);border:1px solid var(--calm);color:var(--text);padding:14px 22px;border-radius:12px;font-size:15px;font-weight:500;box-shadow:0 6px 20px rgba(0,0,0,.4);opacity:0;transition:opacity .2s,transform .2s;z-index:300;pointer-events:none;display:flex;align-items:center;gap:8px;max-width:88vw;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:var(--panel);border:1px solid var(--border);border-radius:20px 20px 0 0;width:100%;max-width:640px;max-height:90dvh;overflow-y:auto;padding:20px 20px calc(20px + var(--safe-b));animation:slideUp .22s ease;}
+.modal-box.center{border-radius:16px;max-height:85dvh;margin:auto;}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;}
+.modal-title{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;margin-bottom:16px;}
+.ch-card{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .15s;}
+.ch-card:hover{border-color:var(--dim);}
+.ch-avatar-placeholder{width:44px;height:44px;border-radius:50%;background:var(--panel);border:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.ch-info{flex:1;min-width:0;}
+.ch-name{font-size:13.5px;font-weight:500;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ch-meta{font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace;}
+.ch-live{display:inline-flex;align-items:center;gap:4px;background:rgba(255,107,91,.15);border:1px solid rgba(255,107,91,.4);border-radius:20px;padding:2px 8px;font-size:9px;font-weight:600;color:var(--live);margin-left:6px;}
+.tier-btns{display:flex;gap:6px;}
+.tier-btn{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);color:var(--dim);cursor:pointer;background:none;font-family:'IBM Plex Mono',monospace;transition:all .15s;}
+.tier-btn.oshi.active{background:rgba(224,98,158,.15);border-color:var(--pink);color:var(--pink);}
+.tier-btn.watch.active{background:rgba(91,157,239,.15);border-color:var(--blue);color:var(--blue);}
+.tier-btn.know.active{background:var(--panel2);border-color:var(--dim);color:var(--dim2);}
+.sched-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.sched-item:last-child{border-bottom:none;}
+.sched-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sched-dot.live{background:var(--live);}
+.sched-dot.upcoming{background:var(--calm);}
+.sched-main{flex:1;}
+.sched-title{font-size:12.5px;font-weight:500;margin-bottom:1px;}
+.sched-meta{font-size:10.5px;color:var(--dim);font-family:'IBM Plex Mono',monospace;}
+.log-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.log-item:last-child{border-bottom:none;}
+.log-type-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.log-type-icon.watch{background:rgba(69,214,176,.12);}
+.log-type-icon.goods{background:rgba(242,184,75,.12);}
+.log-type-icon.superchat{background:rgba(255,107,91,.12);}
+.log-type-icon.event{background:rgba(155,138,251,.12);}
+.log-type-icon.other{background:var(--panel2);}
+.log-info{flex:1;}
+.log-title{font-size:12.5px;font-weight:500;margin-bottom:1px;}
+.log-meta{font-size:10.5px;color:var(--dim);font-family:'IBM Plex Mono',monospace;}
+.log-amount{font-size:12px;color:var(--gold);font-family:'IBM Plex Mono',monospace;white-space:nowrap;}
+.comment-card{background:var(--panel2);border-radius:10px;padding:11px 13px;margin-bottom:6px;}
+.comment-card .cc-video{font-size:10.5px;color:var(--dim);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;}
+.comment-card .cc-text{font-size:13px;line-height:1.55;}
+.comment-card .cc-meta{font-size:10px;color:var(--dim);margin-top:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.comment-card.superchat{border-left:3px solid var(--gold);border-radius:0 10px 10px 0;}
+.comment-card.first{border-left:3px solid var(--pink);border-radius:0 10px 10px 0;}
+.stamp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.stamp-btn{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:12px 8px;cursor:pointer;text-align:center;font-size:22px;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.stamp-btn:hover{border-color:var(--pink);background:rgba(224,98,158,.1);}
+.stamp-btn .stamp-cnt{font-size:10px;color:var(--dim);font-family:'IBM Plex Mono',monospace;}
+.empty{color:var(--dim);font-size:12.5px;padding:24px 0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.empty .empty-icon{font-size:32px;opacity:.4;}
+.plan-gate{background:rgba(224,98,158,.06);border:1px solid rgba(224,98,158,.2);border-radius:10px;padding:16px;text-align:center;margin:8px 0;}
+.plan-gate .pg-icon{font-size:24px;margin-bottom:6px;}
+.plan-gate p{font-size:12px;color:var(--dim);margin:0 0 12px;}
+.fab{position:fixed;right:16px;bottom:calc(24px + var(--safe-b));z-index:89;width:52px;height:52px;border-radius:50%;background:var(--pink);color:#fff;font-size:26px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(224,98,158,.45);transition:transform .15s;}
+.fab:active{transform:scale(.93);}
+#pcAddBtn{display:none;background:var(--pink);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;padding:10px 22px;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;min-height:42px;}
+.page-header{display:flex;justify-content:space-between;align-items:center;padding:6px 0 14px;}
+.page-title{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;}
+.chip-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.chip{background:var(--panel2);border:1px solid var(--border);color:var(--dim);border-radius:20px;font-size:12px;padding:6px 14px;cursor:pointer;min-height:36px;display:flex;align-items:center;font-family:'Inter',sans-serif;}
+.chip.active{color:var(--pink);border-color:var(--pink);background:rgba(224,98,158,.1);}
+.cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.cal-mon{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;}
+.cal-nav{background:none;border:1px solid var(--border);color:var(--dim);border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:14px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-dow{font-size:10px;color:var(--dim);text-align:center;padding-bottom:3px;}
+.cal-cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;font-size:12px;cursor:pointer;position:relative;background:var(--panel2);min-height:36px;}
+.cal-cell.blank{visibility:hidden;cursor:default;}
+.cal-cell.today{border:2px solid var(--pink);}
+.cal-cell.has-event::after{content:'';position:absolute;bottom:3px;width:4px;height:4px;border-radius:50%;background:var(--calm);}
+@media(max-width:600px){
+  .app{padding:10px 14px 60px;}
+  .row{flex-direction:column;}.row>*{width:100%;}
+  .stat-row-4{grid-template-columns:repeat(2,1fr);}
+}
+@media(min-width:601px){
+  .modal-box{border-radius:16px;margin:auto;}
+  .modal-overlay{align-items:center;}
+  .app{max-width:960px;padding:16px 24px 40px;}
+  .top-bar{padding:12px 24px 0;}
+  #topNav{padding:0 20px;max-width:960px;}
+  #topNav button{flex-shrink:0;flex-grow:1;justify-content:center;font-size:11px;padding:8px 6px;}
+  #topNav button .ni{font-size:13px;}
+  .fab{display:none !important;}
+  #pcAddBtn{display:inline-flex;align-items:center;gap:5px;}
+  .pc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
+}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<!-- 認証 -->
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="mark">Cheer<span class="cheer">Desk</span></div>
+    <div class="sub">推しを、もっと近くに。</div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tabSignIn" onclick="switchAuthTab('signin')">ログイン</div>
+      <div class="auth-tab" id="tabSignUp" onclick="switchAuthTab('signup')">新規登録</div>
+    </div>
+    <div class="auth-msg" id="authMsg"></div>
+    <label>メールアドレス</label>
+    <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email">
+    <label>パスワード</label>
+    <input type="password" id="auth-password" placeholder="8文字以上" autocomplete="current-password">
+    <div id="tosRow" style="display:none;flex-direction:row;gap:8px;align-items:flex-start;margin-bottom:14px;">
+      <input type="checkbox" id="auth-tos" style="width:auto;min-height:auto;margin:3px 0 0;accent-color:var(--pink);">
+      <label for="auth-tos" style="margin:0;font-size:12px;color:var(--dim);">利用規約に同意します</label>
+    </div>
+    <button class="primary full" id="authSubmitBtn" onclick="submitAuth()">ログイン</button>
+  </div>
+</div>
+
+<!-- アプリ本体 -->
+<div id="appScreen">
+<div id="topHeader">
+  <div class="top-bar">
+    <div class="brand-mark">Cheer<span class="cheer">Desk</span></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button id="pcAddBtn" onclick="openAddModal()">＋ 追加</button>
+      <div class="live-dot" id="liveIndicator" onclick="switchTab('schedule')">
+        <span class="dot"></span>
+        <span id="liveText" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">確認中...</span>
+      </div>
+    </div>
+  </div>
+  <nav id="topNav">
+    <button class="active" data-tab="home" onclick="switchTab('home')"><span class="ni">🏠</span>ホーム</button>
+    <button data-tab="channels" onclick="switchTab('channels')"><span class="ni">⭐</span>推しリスト</button>
+    <button data-tab="schedule" onclick="switchTab('schedule')"><span class="ni">📅</span>スケジュール</button>
+    <button data-tab="logs" onclick="switchTab('logs')"><span class="ni">📝</span>推し活ログ</button>
+    <button data-tab="comments" onclick="switchTab('comments')"><span class="ni">💬</span>コメント</button>
+    <button data-tab="cheer" onclick="switchTab('cheer')"><span class="ni">📣</span>応援</button>
+    <button data-tab="settings" onclick="switchTab('settings')"><span class="ni">⚙️</span>設定</button>
+  </nav>
+</div>
+
+<div class="app">
+
+<!-- ホーム -->
+<div class="panel-view active" id="panel-home">
+  <div class="page-header"><div class="page-title">ホーム</div></div>
+  <div id="liveBanner"></div>
+  <div class="card">
+    <div class="card-hd">今月の推し活</div>
+    <div class="stat-row-4" id="homeSummaryStats">
+      <div class="stat"><div class="num" style="color:var(--pink);">-</div><div class="lbl">ログ件数</div></div>
+      <div class="stat"><div class="num" style="color:var(--gold);">-</div><div class="lbl">推し活費用</div></div>
+      <div class="stat"><div class="num" style="color:var(--calm);">-</div><div class="lbl">コメント数</div></div>
+      <div class="stat"><div class="num" style="color:var(--purple);">-</div><div class="lbl">応援送信</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd">今日の配信予定 <button class="ghost sm" onclick="switchTab('schedule')">全部見る</button></div>
+    <div id="todaySchedule"><div class="empty"><div class="empty-icon">📅</div>今日の予定はありません</div></div>
+  </div>
+  <div class="card">
+    <div class="card-hd">最近の推し活ログ <button class="ghost sm" onclick="switchTab('logs')">全部見る</button></div>
+    <div id="recentLogs"><div class="empty"><div class="empty-icon">📝</div>ログがありません</div></div>
+  </div>
+</div>
+
+<!-- 推しリスト -->
+<div class="panel-view" id="panel-channels">
+  <div class="page-header">
+    <div class="page-title">推しリスト</div>
+    <button class="ghost sm" onclick="openAddChannelModal()">＋ 追加</button>
+  </div>
+  <div class="chip-row">
+    <div class="chip active" onclick="filterChannels('all',this)">すべて</div>
+    <div class="chip" onclick="filterChannels('oshi',this)">⭐ 推し</div>
+    <div class="chip" onclick="filterChannels('watch',this)">👁 ウォッチ</div>
+    <div class="chip" onclick="filterChannels('know',this)">📌 知っている</div>
+  </div>
+  <div id="channelList"><div class="empty"><div class="empty-icon">⭐</div>まだ登録がありません<br><span style="font-size:11px;">右上の「＋ 追加」から登録しましょう</span></div></div>
+</div>
+
+<!-- スケジュール -->
+<div class="panel-view" id="panel-schedule">
+  <div class="page-header">
+    <div class="page-title">スケジュール</div>
+    <button class="ghost sm" onclick="openAddScheduleModal()">＋ 手動追加</button>
+  </div>
+  <div class="card">
+    <div class="cal-head">
+      <button class="cal-nav" onclick="changeCalMonth(-1)">‹</button>
+      <div class="cal-mon" id="calTitle"></div>
+      <button class="cal-nav" onclick="changeCalMonth(1)">›</button>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-dow">日</div><div class="cal-dow">月</div><div class="cal-dow">火</div>
+      <div class="cal-dow">水</div><div class="cal-dow">木</div><div class="cal-dow">金</div><div class="cal-dow">土</div>
+    </div>
+    <div class="cal-grid" id="calGrid" style="margin-top:3px;"></div>
+  </div>
+  <div class="card">
+    <div class="card-hd" id="scheduleListTitle">予定一覧</div>
+    <div id="scheduleList"><div class="empty"><div class="empty-icon">📅</div>予定がありません</div></div>
+  </div>
+</div>
+
+<!-- 推し活ログ -->
+<div class="panel-view" id="panel-logs">
+  <div class="page-header">
+    <div class="page-title">推し活ログ</div>
+    <button class="ghost sm" onclick="openAddLogModal()">＋ 記録</button>
+  </div>
+  <div class="card">
+    <div class="card-hd">今月の集計</div>
+    <div class="stat-row">
+      <div class="stat"><div class="num" id="logTotalCount" style="color:var(--calm);">0</div><div class="lbl">ログ件数</div></div>
+      <div class="stat"><div class="num" id="logTotalAmount" style="color:var(--gold);">¥0</div><div class="lbl">合計費用</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd">記録一覧
+      <select id="logFilterChannel" onchange="loadLogs()" style="width:auto;min-height:auto;padding:4px 8px;font-size:11px;margin:0;"></select>
+    </div>
+    <div id="logList"><div class="empty"><div class="empty-icon">📝</div>まだログがありません</div></div>
+  </div>
+</div>
+
+<!-- コメント -->
+<div class="panel-view" id="panel-comments">
+  <div class="page-header">
+    <div class="page-title">コメント履歴</div>
+    <button class="ghost sm" onclick="openAddCommentModal()">＋ 手動記録</button>
+  </div>
+  <div id="commentPremiumGate" style="display:none;">
+    <div class="plan-gate">
+      <div class="pg-icon">💬</div>
+      <p>コメント履歴はプレミアムプランの機能です。<br>自分のコメントを自動で記録できます。</p>
+      <button class="primary" onclick="switchTab('settings')">プランを確認する</button>
+    </div>
+  </div>
+  <div id="commentContent">
+    <div class="card">
+      <div class="card-hd">統計</div>
+      <div class="stat-row">
+        <div class="stat"><div class="num" id="commentTotalCount" style="color:var(--calm);">0</div><div class="lbl">総コメント数</div></div>
+        <div class="stat"><div class="num" id="commentSuperTotal" style="color:var(--gold);">¥0</div><div class="lbl">スパチャ合計</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">コメント年表
+        <select id="commentFilterChannel" onchange="loadComments()" style="width:auto;min-height:auto;padding:4px 8px;font-size:11px;margin:0;"></select>
+      </div>
+      <div id="commentList"><div class="empty"><div class="empty-icon">💬</div>コメント履歴がありません</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 応援 -->
+<div class="panel-view" id="panel-cheer">
+  <div class="page-header"><div class="page-title">応援</div></div>
+  <div class="card">
+    <div class="card-hd">応援する推しを選ぶ</div>
+    <select id="cheerTargetChannel" onchange="loadStampCounts()" style="margin-bottom:0;"></select>
+  </div>
+  <div class="card">
+    <div class="card-hd">応援スタンプ</div>
+    <div class="stamp-grid">
+      <div class="stamp-btn" onclick="sendStamp('🔥')"><span>🔥</span><span class="stamp-cnt" id="cnt-fire">-</span></div>
+      <div class="stamp-btn" onclick="sendStamp('💜')"><span>💜</span><span class="stamp-cnt" id="cnt-heart">-</span></div>
+      <div class="stamp-btn" onclick="sendStamp('🎉')"><span>🎉</span><span class="stamp-cnt" id="cnt-party">-</span></div>
+      <div class="stamp-btn" onclick="sendStamp('✨')"><span>✨</span><span class="stamp-cnt" id="cnt-star">-</span></div>
+      <div class="stamp-btn" onclick="sendStamp('👏')"><span>👏</span><span class="stamp-cnt" id="cnt-clap">-</span></div>
+      <div class="stamp-btn" onclick="sendStamp('🥰')"><span>🥰</span><span class="stamp-cnt" id="cnt-love">-</span></div>
+      <div class="stamp-btn" onclick="sendStamp('💪')"><span>💪</span><span class="stamp-cnt" id="cnt-muscle">-</span></div>
+      <div class="stamp-btn" onclick="sendStamp('🎵')"><span>🎵</span><span class="stamp-cnt" id="cnt-music">-</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd">応援レター</div>
+    <textarea id="cheerMessage" placeholder="推しへのメッセージを書いてみましょう..." style="min-height:100px;margin-bottom:8px;"></textarea>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <input type="checkbox" id="cheerAnon" style="width:auto;min-height:auto;margin:0;accent-color:var(--pink);">
+      <label for="cheerAnon" style="margin:0;font-size:12px;">匿名で送る</label>
+    </div>
+    <button class="primary full" onclick="sendCheerMessage()">送る 💌</button>
+  </div>
+  <div class="card">
+    <div class="card-hd">送信履歴</div>
+    <div id="cheerHistory"><div class="empty"><div class="empty-icon">📣</div>まだ送信していません</div></div>
+  </div>
+</div>
+
+<!-- 設定 -->
+<div class="panel-view" id="panel-settings">
+  <div class="page-header"><div class="page-title">設定</div></div>
+  <div class="card">
+    <div class="card-hd">アカウント</div>
+    <div style="font-size:13px;color:var(--dim);margin-bottom:12px;" id="settingsEmail"></div>
+    <button class="ghost sm" onclick="signOut()">ログアウト</button>
+  </div>
+  <div class="card">
+    <div class="card-hd">プラン・割引</div>
+    <div id="planInfo" style="margin-bottom:12px;"></div>
+    <div id="extensionStatus" style="background:var(--panel2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--dim);"></div>
+  </div>
+  <div class="card">
+    <div class="card-hd">通知</div>
+    <button class="ghost sm" onclick="requestNotificationPermission()">プッシュ通知を有効にする</button>
+  </div>
+  <div class="card" style="border-color:rgba(155,138,251,.2);">
+    <div class="card-hd">開発情報</div>
+    <div style="font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace;">CheerDesk v0.1.0 (dev)<br>Supabase: lwbjidjidiulufoaumfl</div>
+  </div>
+</div>
+
+</div>
+<button class="fab" onclick="openAddModal()">＋</button>
+</div>
+
+<!-- モーダル：チャンネル追加 -->
+<div class="modal-overlay" id="addChannelModal">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title">チャンネルを追加</div>
+    <label>プラットフォーム</label>
+    <select id="newChPlatform">
+      <option value="youtube">YouTube</option>
+      <option value="twitch">Twitch</option>
+      <option value="tiktok">TikTok</option>
+      <option value="niconico">ニコニコ</option>
+    </select>
+    <label>チャンネルID / ユーザー名</label>
+    <input type="text" id="newChPlatformId" placeholder="例: @channelname">
+    <label>チャンネル名</label>
+    <input type="text" id="newChName" placeholder="表示名">
+    <label>ティア</label>
+    <div class="tier-btns" style="margin-bottom:12px;">
+      <button class="tier-btn oshi active" onclick="selectTier('oshi',this)">⭐ 推し</button>
+      <button class="tier-btn watch" onclick="selectTier('watch',this)">👁 ウォッチ</button>
+      <button class="tier-btn know" onclick="selectTier('know',this)">📌 知っている</button>
+    </div>
+    <input type="hidden" id="newChTier" value="oshi">
+    <label>推し始めた日（推し歴カウンター用）</label>
+    <input type="date" id="newChFollowedSince">
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="ghost" onclick="closeModal('addChannelModal')">キャンセル</button>
+      <button class="primary" style="flex:1;" onclick="addChannel()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<!-- モーダル：推し活ログ追加 -->
+<div class="modal-overlay" id="addLogModal">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title">推し活を記録</div>
+    <label>推し</label>
+    <select id="logChannel"></select>
+    <label>種類</label>
+    <select id="logType">
+      <option value="watch">🎮 配信を視聴</option>
+      <option value="goods">🛍 グッズ購入</option>
+      <option value="superchat">💰 投げ銭・スパチャ</option>
+      <option value="event">🎪 イベント参加</option>
+      <option value="other">📌 その他</option>
+    </select>
+    <label>タイトル・メモ</label>
+    <input type="text" id="logTitle" placeholder="例: 雑談配信を視聴">
+    <label>費用（円・任意）</label>
+    <input type="number" id="logAmount" placeholder="0" min="0">
+    <label>日付</label>
+    <input type="date" id="logDate">
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="ghost" onclick="closeModal('addLogModal')">キャンセル</button>
+      <button class="primary" style="flex:1;" onclick="addLog()">記録する</button>
+    </div>
+  </div>
+</div>
+
+<!-- モーダル：コメント手動記録 -->
+<div class="modal-overlay" id="addCommentModal">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title">コメントを記録</div>
+    <label>チャンネル</label>
+    <select id="commentChannel"></select>
+    <label>動画タイトル</label>
+    <input type="text" id="commentVideoTitle" placeholder="配信・動画タイトル">
+    <label>コメント内容</label>
+    <textarea id="commentText" placeholder="送ったコメントを入力..." style="min-height:80px;"></textarea>
+    <label>種類</label>
+    <select id="commentType">
+      <option value="comment">💬 コメント</option>
+      <option value="superchat">💰 スパチャ</option>
+      <option value="bits">🎮 Bits（Twitch）</option>
+    </select>
+    <label>金額（スパチャの場合）</label>
+    <input type="number" id="commentAmount" placeholder="0" min="0">
+    <label>日時</label>
+    <input type="datetime-local" id="commentDate">
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="ghost" onclick="closeModal('addCommentModal')">キャンセル</button>
+      <button class="primary" style="flex:1;" onclick="addComment()">記録する</button>
+    </div>
+  </div>
+</div>
+
+<!-- モーダル：スケジュール追加 -->
+<div class="modal-overlay" id="addScheduleModal">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title">スケジュールを追加</div>
+    <label>チャンネル</label>
+    <select id="schedChannel"></select>
+    <label>タイトル</label>
+    <input type="text" id="schedTitle" placeholder="配信・動画タイトル">
+    <label>種類</label>
+    <select id="schedType">
+      <option value="live">🔴 配信</option>
+      <option value="video">📹 動画投稿</option>
+      <option value="collab">🤝 コラボ</option>
+    </select>
+    <label>開始日時</label>
+    <input type="datetime-local" id="schedStartsAt">
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="ghost" onclick="closeModal('addScheduleModal')">キャンセル</button>
+      <button class="primary" style="flex:1;" onclick="addSchedule()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<!-- モーダル：チャンネル詳細 -->
+<div class="modal-overlay" id="channelDetailModal">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div id="channelDetailContent"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="ghost" onclick="closeModal('channelDetailModal')">閉じる</button>
+      <button style="background:none;border:1px solid var(--live);color:var(--live);border-radius:10px;font-size:13px;padding:10px 14px;cursor:pointer;" onclick="deleteChannel()">削除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SURL='https://lwbjidjidiulufoaumfl.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3YmppZGppZGl1bHVmb2F1bWZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTM2NTcsImV4cCI6MjA5ODE4OTY1N30.kikAT2XSefWPionYuXe1mNd1c-Oxyk71fXugUk-Fj6c';
+const sb=supabase.createClient(SURL,SKEY);
+let CU=null,CPlan='free',CTab='home',calY,calM,AChans=[],CFilt='all',CDetail=null;
+
+(async()=>{
+  const {data:{session}}=await sb.auth.getSession();
+  if(session) await onLogin(session.user);
+  sb.auth.onAuthStateChange((_,s)=>{if(s)onLogin(s.user);else showAuth();});
+  const n=new Date();calY=n.getFullYear();calM=n.getMonth();
+})();
+
+async function onLogin(u){
+  CU=u;
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('appScreen').style.display='block';
+  document.getElementById('settingsEmail').textContent=u.email;
+  const {data:ud}=await sb.from('users').select('*').eq('id',u.id).single();
+  if(ud){CPlan=ud.plan||'free';updatePlanUI(ud);}
+  await loadChannels();
+  loadHomeData();renderCal();loadSchedule();loadLogs();loadComments();loadCheerHistory();
+}
+function showAuth(){CU=null;document.getElementById('authScreen').style.display='flex';document.getElementById('appScreen').style.display='none';}
+
+let authMode='signin';
+function switchAuthTab(m){
+  authMode=m;
+  document.getElementById('tabSignIn').className='auth-tab'+(m==='signin'?' active':'');
+  document.getElementById('tabSignUp').className='auth-tab'+(m==='signup'?' active':'');
+  document.getElementById('authSubmitBtn').textContent=m==='signin'?'ログイン':'新規登録';
+  document.getElementById('tosRow').style.display=m==='signup'?'flex':'none';
+  document.getElementById('authMsg').textContent='';
+}
+async function submitAuth(){
+  const email=document.getElementById('auth-email').value.trim();
+  const pw=document.getElementById('auth-password').value;
+  const msg=document.getElementById('authMsg');
+  if(!email||!pw){msg.textContent='メールとパスワードを入力してください';return;}
+  const btn=document.getElementById('authSubmitBtn');btn.disabled=true;
+  if(authMode==='signin'){
+    const{error}=await sb.auth.signInWithPassword({email,password:pw});
+    if(error){msg.textContent='ログインに失敗しました';btn.disabled=false;}
+  }else{
+    if(!document.getElementById('auth-tos').checked){msg.textContent='利用規約に同意してください';btn.disabled=false;return;}
+    const{error}=await sb.auth.signUp({email,password:pw});
+    if(error){msg.textContent=error.message;btn.disabled=false;}
+    else{msg.className='auth-msg ok';msg.textContent='確認メールを送りました。メールを確認してください。';}
+  }
+  btn.disabled=false;
+}
+async function signOut(){await sb.auth.signOut();showAuth();}
+
+function switchTab(t){
+  CTab=t;
+  document.querySelectorAll('#topNav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  document.querySelectorAll('.panel-view').forEach(p=>p.classList.toggle('active',p.id==='panel-'+t));
+  window.scrollTo(0,0);
+}
+
+async function loadChannels(){
+  if(!CU)return;
+  const{data}=await sb.from('user_channels').select('*,channels(*)').eq('user_id',CU.id).order('created_at',{ascending:false});
+  AChans=data||[];
+  renderChannelList();updateChSelects();
+  const liveCount=AChans.filter(c=>c.channels.is_live).length;
+  const lEl=document.getElementById('liveText');
+  if(lEl)lEl.textContent=liveCount>0?liveCount+'人がLIVE中':'配信なし';
+}
+
+function renderChannelList(){
+  const el=document.getElementById('channelList');
+  const list=CFilt==='all'?AChans:AChans.filter(c=>c.tier===CFilt);
+  if(!list.length){el.innerHTML=`<div class="empty"><div class="empty-icon">⭐</div>${CFilt==='all'?'まだ登録がありません':'このティアにチャンネルがありません'}</div>`;return;}
+  el.innerHTML=list.map(uc=>{
+    const ch=uc.channels;
+    const days=uc.followed_since?Math.floor((new Date()-new Date(uc.followed_since))/86400000):null;
+    return`<div class="ch-card" onclick="openChDetail('${uc.id}')">
+      <div class="ch-avatar-placeholder">${pfIcon(ch.platform)}</div>
+      <div class="ch-info">
+        <div class="ch-name">${esc(ch.name)}${ch.is_live?'<span class="ch-live">● LIVE</span>':''}</div>
+        <div class="ch-meta">${ch.platform}${days!==null?' · 推し歴'+days+'日':''}</div>
+      </div>
+      <span class="tag ${uc.tier}">${tierLbl(uc.tier)}</span>
+    </div>`;
+  }).join('');
+}
+
+function filterChannels(t,el){
+  CFilt=t;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderChannelList();
+}
+
+function updateChSelects(){
+  const oshi=AChans.filter(c=>c.tier==='oshi');
+  const all=AChans;
+  [['logChannel',oshi],['commentChannel',all],['schedChannel',all],['cheerTargetChannel',oshi]].forEach(([id,src])=>{
+    const s=document.getElementById(id);if(!s)return;
+    s.innerHTML='<option value="">選択してください...</option>'+src.map(uc=>`<option value="${uc.channel_id}">${esc(uc.channels.name)}</option>`).join('');
+  });
+  const lf=document.getElementById('logFilterChannel');
+  if(lf)lf.innerHTML='<option value="">全推し</option>'+oshi.map(uc=>`<option value="${uc.channel_id}">${esc(uc.channels.name)}</option>`).join('');
+  const cf=document.getElementById('commentFilterChannel');
+  if(cf)cf.innerHTML='<option value="">全チャンネル</option>'+all.map(uc=>`<option value="${uc.channel_id}">${esc(uc.channels.name)}</option>`).join('');
+}
+
+function openAddChannelModal(){openModal('addChannelModal');}
+async function addChannel(){
+  const pid=document.getElementById('newChPlatformId').value.trim();
+  const name=document.getElementById('newChName').value.trim();
+  const pf=document.getElementById('newChPlatform').value;
+  const tier=document.getElementById('newChTier').value;
+  const since=document.getElementById('newChFollowedSince').value||null;
+  if(!pid||!name){toast('チャンネルIDと名前を入力してください');return;}
+  const oshiCnt=AChans.filter(c=>c.tier==='oshi').length;
+  if(tier==='oshi'){
+    if(CPlan==='free'&&oshiCnt>=1){toast('フリープランは推しを1人まで');return;}
+    if(CPlan==='standard'&&oshiCnt>=5){toast('スタンダードは推しを5人まで');return;}
+  }
+  const{data:ch,error:ce}=await sb.from('channels').upsert({platform:pf,platform_channel_id:pid,name},{onConflict:'platform,platform_channel_id'}).select().single();
+  if(ce){toast('追加に失敗: '+ce.message);return;}
+  const{error}=await sb.from('user_channels').upsert({user_id:CU.id,channel_id:ch.id,tier,notify_live:true,notify_video:tier!=='know',followed_since:since},{onConflict:'user_id,channel_id'});
+  if(error){toast('追加に失敗: '+error.message);return;}
+  closeModal('addChannelModal');toast('✓ チャンネルを追加しました');
+  document.getElementById('newChPlatformId').value='';document.getElementById('newChName').value='';document.getElementById('newChFollowedSince').value='';
+  await loadChannels();
+}
+
+function openChDetail(ucId){
+  const uc=AChans.find(c=>c.id===ucId);if(!uc)return;
+  CDetail=uc;const ch=uc.channels;
+  const days=uc.followed_since?Math.floor((new Date()-new Date(uc.followed_since))/86400000):null;
+  document.getElementById('channelDetailContent').innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div class="ch-avatar-placeholder" style="width:52px;height:52px;font-size:22px;">${pfIcon(ch.platform)}</div>
+      <div>
+        <div style="font-size:16px;font-weight:600;">${esc(ch.name)}</div>
+        <div style="font-size:12px;color:var(--dim);">${ch.platform}${days!==null?' · 推し歴<b style="color:var(--pink);">'+days+'日</b>':''}</div>
+      </div>
+    </div>
+    <div class="card-hd">ティアを変更</div>
+    <div class="tier-btns" style="margin-bottom:16px;">
+      <button class="tier-btn oshi ${uc.tier==='oshi'?'active':''}" onclick="changeTier('${ucId}','oshi',this)">⭐ 推し</button>
+      <button class="tier-btn watch ${uc.tier==='watch'?'active':''}" onclick="changeTier('${ucId}','watch',this)">👁 ウォッチ</button>
+      <button class="tier-btn know ${uc.tier==='know'?'active':''}" onclick="changeTier('${ucId}','know',this)">📌 知っている</button>
+    </div>
+    <div class="card-hd">通知設定</div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px;">
+      <input type="checkbox" ${uc.notify_live?'checked':''} onchange="updNotify('${ucId}','notify_live',this.checked)" style="width:auto;min-height:auto;margin:0;accent-color:var(--pink);"><span style="font-size:13px;">LIVE開始を通知</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+      <input type="checkbox" ${uc.notify_video?'checked':''} onchange="updNotify('${ucId}','notify_video',this.checked)" style="width:auto;min-height:auto;margin:0;accent-color:var(--pink);"><span style="font-size:13px;">新動画を通知</span>
+    </label>`;
+  openModal('channelDetailModal');
+}
+
+async function changeTier(ucId,tier,btn){
+  const oc=AChans.filter(c=>c.tier==='oshi'&&c.id!==ucId).length;
+  if(tier==='oshi'){
+    if(CPlan==='free'&&oc>=1){toast('フリープランは推しを1人まで');return;}
+    if(CPlan==='standard'&&oc>=5){toast('スタンダードは推しを5人まで');return;}
+  }
+  await sb.from('user_channels').update({tier}).eq('id',ucId);
+  btn.closest('.tier-btns').querySelectorAll('.tier-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  toast('✓ ティアを変更しました');await loadChannels();
+}
+async function updNotify(ucId,field,val){await sb.from('user_channels').update({[field]:val}).eq('id',ucId);}
+async function deleteChannel(){
+  if(!CDetail||!confirm('登録を削除しますか？'))return;
+  await sb.from('user_channels').delete().eq('id',CDetail.id);
+  closeModal('channelDetailModal');toast('✓ 削除しました');await loadChannels();
+}
+function selectTier(t,btn){
+  document.getElementById('newChTier').value=t;
+  btn.closest('.tier-btns').querySelectorAll('.tier-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function loadHomeData(){
+  if(!CU)return;
+  const n=new Date();const ms=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0];const me=new Date(n.getFullYear(),n.getMonth()+1,0).toISOString().split('T')[0];
+  const[{data:logs},{data:coms},{data:cheers}]=await Promise.all([
+    sb.from('cheer_logs').select('*').eq('user_id',CU.id).gte('logged_at',ms).lte('logged_at',me),
+    sb.from('comment_logs').select('*').eq('user_id',CU.id).gte('commented_at',ms+'T00:00:00').lte('commented_at',me+'T23:59:59'),
+    sb.from('cheer_messages').select('*').eq('user_id',CU.id).gte('sent_at',ms+'T00:00:00').lte('sent_at',me+'T23:59:59')
+  ]);
+  const amt=(logs||[]).reduce((s,l)=>s+(l.amount||0),0);
+  const ss=document.getElementById('homeSummaryStats');
+  if(ss)ss.innerHTML=`
+    <div class="stat"><div class="num" style="color:var(--pink);">${(logs||[]).length}</div><div class="lbl">ログ件数</div></div>
+    <div class="stat"><div class="num" style="color:var(--gold);">¥${amt.toLocaleString()}</div><div class="lbl">推し活費用</div></div>
+    <div class="stat"><div class="num" style="color:var(--calm);">${(coms||[]).length}</div><div class="lbl">コメント</div></div>
+    <div class="stat"><div class="num" style="color:var(--purple);">${(cheers||[]).length}</div><div class="lbl">応援送信</div></div>`;
+  const{data:rl}=await sb.from('cheer_logs').select('*,channels(name)').eq('user_id',CU.id).order('created_at',{ascending:false}).limit(3);
+  const rEl=document.getElementById('recentLogs');
+  if(rEl)rEl.innerHTML=rl?.length?rl.map(l=>`<div class="log-item"><div class="log-type-icon ${l.log_type}">${liIcon(l.log_type)}</div><div class="log-info"><div class="log-title">${esc(l.title||liLbl(l.log_type))}</div><div class="log-meta">${l.channels?.name||''} · ${fmtD(l.logged_at)}</div></div>${l.amount?`<div class="log-amount">¥${l.amount.toLocaleString()}</div>`:''}</div>`).join(''):`<div class="empty"><div class="empty-icon">📝</div>ログがありません</div>`;
+  const today=new Date().toISOString().split('T')[0];const tom=new Date(Date.now()+86400000).toISOString().split('T')[0];
+  const ids=AChans.map(c=>c.channel_id);
+  if(ids.length){
+    const{data:ts}=await sb.from('channel_schedules').select('*,channels(name)').in('channel_id',ids).gte('starts_at',today+'T00:00:00').lt('starts_at',tom+'T00:00:00').order('starts_at');
+    const tEl=document.getElementById('todaySchedule');
+    if(tEl)tEl.innerHTML=ts?.length?ts.map(s=>`<div class="sched-item"><div class="sched-dot ${s.status==='live'?'live':'upcoming'}"></div><div class="sched-main"><div class="sched-title">${esc(s.title||'配信予定')}</div><div class="sched-meta">${s.channels?.name||''} · ${fmtT(s.starts_at)}</div></div><span class="tag ${s.status==='live'?'oshi':'watch'}">${stLbl(s.status)}</span></div>`).join(''):`<div class="empty"><div class="empty-icon">📅</div>今日の予定はありません</div>`;
+  }
+  const live=AChans.filter(c=>c.channels.is_live&&c.tier==='oshi');
+  const bEl=document.getElementById('liveBanner');
+  if(bEl)bEl.innerHTML=live.length?live.map(uc=>`<div class="card" style="border-color:var(--live);background:rgba(255,107,91,.07);margin-bottom:10px;"><div style="display:flex;align-items:center;gap:10px;"><span class="dot"></span><div style="flex:1;"><div style="font-size:13.5px;font-weight:600;">${esc(uc.channels.name)}</div><div style="font-size:11px;color:var(--dim);">${esc(uc.channels.live_title||'配信中')}</div></div><span style="font-size:11px;color:var(--live);font-weight:600;">LIVE</span></div></div>`).join(''):'';
+}
+
+function renderCal(){
+  const tEl=document.getElementById('calTitle');const gEl=document.getElementById('calGrid');
+  if(!tEl||!gEl)return;
+  tEl.textContent=`${calY}年${calM+1}月`;
+  const fd=new Date(calY,calM,1).getDay();const dm=new Date(calY,calM+1,0).getDate();
+  const tod=new Date();let h='';
+  for(let i=0;i<fd;i++)h+=`<div class="cal-cell blank"></div>`;
+  for(let d=1;d<=dm;d++){
+    const isT=d===tod.getDate()&&calM===tod.getMonth()&&calY===tod.getFullYear();
+    h+=`<div class="cal-cell ${isT?'today':''}" onclick="selDay(${d})">${d}</div>`;
+  }
+  gEl.innerHTML=h;
+}
+function changeCalMonth(dir){
+  calM+=dir;if(calM<0){calM=11;calY--;}if(calM>11){calM=0;calY++;}
+  renderCal();loadSchedule();
+}
+function selDay(d){
+  const ds=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  loadSchedForDate(ds);
+}
+async function loadSchedule(){
+  const ids=AChans.map(c=>c.channel_id);if(!ids.length)return;
+  const ms=`${calY}-${String(calM+1).padStart(2,'0')}-01`;
+  const me=`${calY}-${String(calM+1).padStart(2,'0')}-${new Date(calY,calM+1,0).getDate()}`;
+  const{data}=await sb.from('channel_schedules').select('*,channels(name)').in('channel_id',ids).gte('starts_at',ms).lte('starts_at',me+'T23:59:59');
+  const days=new Set((data||[]).map(s=>new Date(s.starts_at).getDate()));
+  document.querySelectorAll('.cal-cell:not(.blank)').forEach(c=>{
+    const d=parseInt(c.textContent);
+    if(days.has(d))c.classList.add('has-event');else c.classList.remove('has-event');
+  });
+  renderSchedList(data||[],`${calY}年${calM+1}月の予定`);
+}
+async function loadSchedForDate(ds){
+  const ids=AChans.map(c=>c.channel_id);if(!ids.length)return;
+  const{data}=await sb.from('channel_schedules').select('*,channels(name)').in('channel_id',ids).gte('starts_at',ds+'T00:00:00').lte('starts_at',ds+'T23:59:59').order('starts_at');
+  renderSchedList(data||[],`${ds}の予定`);
+}
+function renderSchedList(data,title){
+  const el=document.getElementById('scheduleList');const tEl=document.getElementById('scheduleListTitle');
+  if(tEl)tEl.textContent=title;if(!el)return;
+  if(!data.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📅</div>予定がありません</div>`;return;}
+  el.innerHTML=data.map(s=>`<div class="sched-item"><div class="sched-dot ${s.status==='live'?'live':'upcoming'}"></div><div class="sched-main"><div class="sched-title">${esc(s.title||stTypeLbl(s.schedule_type))}</div><div class="sched-meta">${s.channels?.name||''} · ${fmtT(s.starts_at)}</div></div><span class="tag ${s.status==='live'?'oshi':'watch'}">${stLbl(s.status)}</span></div>`).join('');
+}
+function openAddScheduleModal(){document.getElementById('schedStartsAt').value=new Date().toISOString().slice(0,16);openModal('addScheduleModal');}
+async function addSchedule(){
+  const cid=document.getElementById('schedChannel').value;const title=document.getElementById('schedTitle').value.trim();
+  const type=document.getElementById('schedType').value;const sa=document.getElementById('schedStartsAt').value;
+  if(!cid||!sa){toast('チャンネルと開始日時を入力してください');return;}
+  const{error}=await sb.from('channel_schedules').insert({channel_id:cid,title:title||null,schedule_type:type,starts_at:new Date(sa).toISOString(),source:'manual',status:'upcoming'});
+  if(error){toast('追加に失敗: '+error.message);return;}
+  closeModal('addScheduleModal');toast('✓ 追加しました');loadSchedule();
+}
+
+async function loadLogs(){
+  if(!CU)return;
+  const cf=document.getElementById('logFilterChannel')?.value||'';
+  let q=sb.from('cheer_logs').select('*,channels(name)').eq('user_id',CU.id).order('logged_at',{ascending:false}).limit(50);
+  if(cf)q=q.eq('channel_id',cf);
+  const{data}=await q;
+  const n=new Date();const tm=data?.filter(l=>{const d=new Date(l.logged_at);return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth();})||[];
+  const amt=tm.reduce((s,l)=>s+(l.amount||0),0);
+  document.getElementById('logTotalCount').textContent=tm.length;
+  document.getElementById('logTotalAmount').textContent='¥'+amt.toLocaleString();
+  const el=document.getElementById('logList');if(!el)return;
+  if(!data?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📝</div>まだログがありません</div>`;return;}
+  el.innerHTML=data.map(l=>`<div class="log-item"><div class="log-type-icon ${l.log_type}">${liIcon(l.log_type)}</div><div class="log-info"><div class="log-title">${esc(l.title||liLbl(l.log_type))}</div><div class="log-meta">${l.channels?.name||''} · ${fmtD(l.logged_at)}</div></div>${l.amount?`<div class="log-amount">¥${l.amount.toLocaleString()}</div>`:''}</div>`).join('');
+}
+function openAddLogModal(){
+  if(CPlan==='free'){toast('推し活ログはスタンダード以上のプランで利用できます');return;}
+  document.getElementById('logDate').value=new Date().toISOString().split('T')[0];
+  openModal('addLogModal');
+}
+async function addLog(){
+  const cid=document.getElementById('logChannel').value;const type=document.getElementById('logType').value;
+  const title=document.getElementById('logTitle').value.trim();const amount=parseInt(document.getElementById('logAmount').value)||null;
+  const date=document.getElementById('logDate').value;if(!date){toast('日付を入力してください');return;}
+  const{error}=await sb.from('cheer_logs').insert({user_id:CU.id,channel_id:cid||null,log_type:type,title:title||null,amount,logged_at:date});
+  if(error){toast('記録に失敗しました');return;}
+  closeModal('addLogModal');toast('✓ 記録しました');
+  document.getElementById('logTitle').value='';document.getElementById('logAmount').value='';
+  loadLogs();loadHomeData();
+}
+
+async function loadComments(){
+  if(!CU)return;
+  if(CPlan==='free'){document.getElementById('commentPremiumGate').style.display='block';document.getElementById('commentContent').style.display='none';return;}
+  document.getElementById('commentPremiumGate').style.display='none';document.getElementById('commentContent').style.display='block';
+  const cf=document.getElementById('commentFilterChannel')?.value||'';
+  let q=sb.from('comment_logs').select('*,channels(name)').eq('user_id',CU.id).order('commented_at',{ascending:false}).limit(50);
+  if(cf)q=q.eq('channel_id',cf);
+  const{data}=await q;
+  const st=(data||[]).filter(c=>c.comment_type==='superchat').reduce((s,c)=>s+(c.amount||0),0);
+  document.getElementById('commentTotalCount').textContent=(data||[]).length;
+  document.getElementById('commentSuperTotal').textContent='¥'+st.toLocaleString();
+  const el=document.getElementById('commentList');if(!el)return;
+  if(!data?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">💬</div>コメント履歴がありません</div>`;return;}
+  el.innerHTML=data.map(c=>`<div class="comment-card ${c.comment_type==='superchat'?'superchat':''} ${c.is_first_comment?'first':''}"><div class="cc-video">${esc(c.channels?.name||'')}${c.video_title?' · '+esc(c.video_title):''}</div><div class="cc-text">${esc(c.comment_text||'(コメントなし)')}</div><div class="cc-meta">${c.is_first_comment?'<span style="color:var(--pink);font-weight:600;">🎉 初コメント</span>':''}${c.comment_type==='superchat'?`<span style="color:var(--gold);">💰 ¥${(c.amount||0).toLocaleString()}</span>`:''}<span>${fmtDT(c.commented_at)}</span></div></div>`).join('');
+}
+function openAddCommentModal(){
+  if(CPlan==='free'){toast('コメント履歴はプレミアムプランの機能です');return;}
+  document.getElementById('commentDate').value=new Date().toISOString().slice(0,16);openModal('addCommentModal');
+}
+async function addComment(){
+  const cid=document.getElementById('commentChannel').value;const vt=document.getElementById('commentVideoTitle').value.trim();
+  const text=document.getElementById('commentText').value.trim();const type=document.getElementById('commentType').value;
+  const amount=parseInt(document.getElementById('commentAmount').value)||null;const date=document.getElementById('commentDate').value;
+  if(!text){toast('コメント内容を入力してください');return;}
+  let isFirst=false;
+  if(cid){const{data:ex}=await sb.from('comment_logs').select('id').eq('user_id',CU.id).eq('channel_id',cid).limit(1);isFirst=!ex?.length;}
+  const pf=AChans.find(c=>c.channel_id===cid)?.channels.platform||'youtube';
+  const{error}=await sb.from('comment_logs').insert({user_id:CU.id,channel_id:cid||null,platform:pf,source:'manual',video_title:vt||null,comment_text:text,comment_type:type,amount,commented_at:date?new Date(date).toISOString():new Date().toISOString(),is_first_comment:isFirst});
+  if(error){toast('記録に失敗しました');return;}
+  closeModal('addCommentModal');toast(isFirst?'🎉 初コメントを記録しました！':'✓ コメントを記録しました');
+  document.getElementById('commentVideoTitle').value='';document.getElementById('commentText').value='';document.getElementById('commentAmount').value='';
+  loadComments();
+}
+
+async function loadCheerHistory(){
+  if(!CU)return;
+  const{data}=await sb.from('cheer_messages').select('*,channels(name)').eq('user_id',CU.id).order('sent_at',{ascending:false}).limit(20);
+  const el=document.getElementById('cheerHistory');if(!el)return;
+  if(!data?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📣</div>まだ送信していません</div>`;return;}
+  el.innerHTML=data.map(m=>`<div class="log-item"><div class="log-type-icon watch" style="font-size:18px;">${m.message_type==='stamp'?(m.stamp_emoji||'💜'):'💌'}</div><div class="log-info"><div class="log-title">${m.body?esc(m.body.slice(0,40))+(m.body.length>40?'...':''):(m.stamp_emoji||'スタンプ')}</div><div class="log-meta">${m.channels?.name||''} · ${fmtDT(m.sent_at)}${m.is_anonymous?' · 匿名':''}</div></div></div>`).join('');
+}
+async function loadStampCounts(){
+  const cid=document.getElementById('cheerTargetChannel').value;if(!cid)return;
+  const{data}=await sb.from('cheer_messages').select('stamp_emoji').eq('channel_id',cid).eq('message_type','stamp');
+  const cnt={};(data||[]).forEach(m=>{cnt[m.stamp_emoji]=(cnt[m.stamp_emoji]||0)+1;});
+  const map={'🔥':'fire','💜':'heart','🎉':'party','✨':'star','👏':'clap','🥰':'love','💪':'muscle','🎵':'music'};
+  Object.entries(map).forEach(([e,k])=>{const el=document.getElementById('cnt-'+k);if(el)el.textContent=(cnt[e]||0)+'件';});
+}
+async function sendStamp(emoji){
+  const cid=document.getElementById('cheerTargetChannel').value;if(!cid){toast('推しを選んでください');return;}
+  if(CPlan==='free'){
+    const{count}=await sb.from('cheer_messages').select('*',{count:'exact',head:true}).eq('user_id',CU.id).gte('sent_at',new Date(Date.now()-2592000000).toISOString());
+    if((count||0)>=3){toast('フリープランのスタンプ送信は月3回まで');return;}
+  }
+  const{error}=await sb.from('cheer_messages').insert({user_id:CU.id,channel_id:cid,message_type:'stamp',stamp_emoji:emoji,is_anonymous:false});
+  if(error){toast('送信に失敗しました');return;}
+  toast('✓ '+emoji+' を送りました！');loadStampCounts();loadCheerHistory();
+}
+async function sendCheerMessage(){
+  const cid=document.getElementById('cheerTargetChannel').value;const body=document.getElementById('cheerMessage').value.trim();const isAnon=document.getElementById('cheerAnon').checked;
+  if(!cid){toast('推しを選んでください');return;}if(!body){toast('メッセージを入力してください');return;}
+  const{error}=await sb.from('cheer_messages').insert({user_id:CU.id,channel_id:cid,message_type:'letter',body,is_anonymous:isAnon});
+  if(error){toast('送信に失敗しました');return;}
+  toast('💌 応援レターを送りました！');document.getElementById('cheerMessage').value='';loadCheerHistory();
+}
+
+function updatePlanUI(ud){
+  const pn={free:'フリー',standard:'スタンダード',premium:'プレミアム'};
+  const pi=document.getElementById('planInfo');const es=document.getElementById('extensionStatus');
+  if(pi)pi.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;"><span style="font-size:15px;font-weight:600;">${pn[ud.plan||'free']}</span><span style="font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--pink);color:var(--pink);font-family:'IBM Plex Mono',monospace;">${ud.billing_cycle==='annual'?'年払い':'月払い'}</span>${ud.extension_verified?'<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(69,214,176,.12);color:var(--calm);border:1px solid rgba(69,214,176,.3);">拡張割引 適用中</span>':''}</div>`;
+  if(es)es.innerHTML=ud.extension_verified?`<span style="color:var(--calm);">✓</span> Chrome拡張がインストール済みです。拡張割引が適用されています。<br><button class="link-btn" style="margin-top:6px;" onclick="revokeExt()">割引を解除する</button>`:`Chrome拡張をインストールすると月額が割引されます。`;
+}
+async function revokeExt(){
+  if(!confirm('拡張割引を解除しますか？翌月から通常料金になります。'))return;
+  await sb.from('users').update({extension_verified:false,extension_verified_at:null}).eq('id',CU.id);
+  toast('✓ 拡張割引を解除しました');
+  const{data:ud}=await sb.from('users').select('*').eq('id',CU.id).single();if(ud)updatePlanUI(ud);
+}
+async function requestNotificationPermission(){
+  if(!('Notification'in window)){toast('このブラウザは通知に対応していません');return;}
+  const p=await Notification.requestPermission();
+  toast(p==='granted'?'✓ 通知を有効にしました':'通知が許可されませんでした');
+}
+
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+document.addEventListener('click',e=>{if(e.target.classList.contains('modal-overlay'))document.querySelectorAll('.modal-overlay.show').forEach(m=>m.classList.remove('show'));});
+function openAddModal(){
+  if(CTab==='channels')openAddChannelModal();
+  else if(CTab==='logs')openAddLogModal();
+  else if(CTab==='comments')openAddCommentModal();
+  else if(CTab==='schedule')openAddScheduleModal();
+  else openAddLogModal();
+}
+
+let toastT;
+function toast(msg){
+  const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function pfIcon(p){return{youtube:'▶',twitch:'🎮',tiktok:'🎵',niconico:'ⓝ'}[p]||'📺';}
+function tierLbl(t){return{oshi:'⭐ 推し',watch:'👁 ウォッチ',know:'📌 知っている'}[t]||t;}
+function liIcon(t){return{watch:'🎮',goods:'🛍',superchat:'💰',event:'🎪',other:'📌'}[t]||'📌';}
+function liLbl(t){return{watch:'配信を視聴',goods:'グッズ購入',superchat:'投げ銭',event:'イベント参加',other:'その他'}[t]||t;}
+function stTypeLbl(t){return{live:'配信',video:'動画投稿',collab:'コラボ'}[t]||t;}
+function stLbl(s){return{upcoming:'予定',live:'LIVE中',ended:'終了'}[s]||s;}
+function fmtD(d){if(!d)return'';const dt=new Date(d);return`${dt.getFullYear()}/${dt.getMonth()+1}/${dt.getDate()}`;}
+function fmtT(d){if(!d)return'';const dt=new Date(d);return`${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}`;}
+function fmtDT(d){if(!d)return'';const dt=new Date(d);return`${dt.getFullYear()}/${dt.getMonth()+1}/${dt.getDate()} ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}`;}
+</script>
+</body>
+</html>
