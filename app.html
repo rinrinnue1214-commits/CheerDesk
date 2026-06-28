@@ -2084,20 +2084,30 @@ async function generatePDF(){
 // ── オンボーディング ──
 async function checkOnboarding(){
   if(!CU)return;
-  // Supabaseでオンボーディング完了フラグを確認
+  // localStorageで先にチェック（高速）
+  if(localStorage.getItem('cd_onboarded_'+CU.id)==='1')return;
+  // Supabaseでも確認
   const{data:ud}=await sb.from('users').select('onboarded').eq('id',CU.id).single();
-  if(!ud?.onboarded){
-    document.getElementById('onboardingScreen').style.display='flex';
+  if(ud?.onboarded){
+    localStorage.setItem('cd_onboarded_'+CU.id,'1');
+    return;
   }
+  document.getElementById('onboardingScreen').style.display='flex';
 }
 async function finishOnboarding(){
-  await sb.from('users').update({onboarded:true}).eq('id',CU.id);
+  if(CU){
+    localStorage.setItem('cd_onboarded_'+CU.id,'1');
+    await sb.from('users').update({onboarded:true}).eq('id',CU.id);
+  }
   document.getElementById('onboardingScreen').style.display='none';
   switchTab('channels');
   setTimeout(()=>openAddChannelModal(),300);
 }
 function skipOnboarding(){
-  sb.from('users').update({onboarded:true}).eq('id',CU.id);
+  if(CU){
+    localStorage.setItem('cd_onboarded_'+CU.id,'1');
+    sb.from('users').update({onboarded:true}).eq('id',CU.id);
+  }
   document.getElementById('onboardingScreen').style.display='none';
 }
 
