@@ -240,6 +240,12 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <div class="card-hd">最近の推し活ログ <button class="ghost sm" onclick="switchTab('logs')">全部見る</button></div>
     <div id="recentLogs"><div class="empty"><div class="empty-icon">📝</div>ログがありません</div></div>
   </div>
+
+  <!-- 今月のサマリー自動生成 -->
+  <div class="card" id="monthlySummaryCard">
+    <div class="card-hd">今月の推し活まとめ <button class="ghost sm" onclick="genMonthlySummary()">生成</button></div>
+    <div id="monthlySummaryContent" style="font-size:13px;color:var(--dim);line-height:1.7;">「生成」ボタンで今月の推し活をまとめます。Xにそのまま投稿できます。</div>
+  </div>
 </div>
 
 <!-- 推しリスト -->
@@ -293,6 +299,12 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
       <div class="stat"><div class="num" id="logTotalCount" style="color:var(--calm);">0</div><div class="lbl">ログ件数</div></div>
       <div class="stat"><div class="num" id="logTotalAmount" style="color:var(--gold);">¥0</div><div class="lbl">合計費用</div></div>
     </div>
+  </div>
+
+  <!-- 年間費用グラフ（プレミアム） -->
+  <div class="card" id="logYearGraphCard">
+    <div class="card-hd">年間推し活費用（月別）<span style="font-size:10px;color:var(--gold);margin-left:4px;">プレミアム</span></div>
+    <div id="logYearGraph"></div>
   </div>
   <div class="card">
     <div class="card-hd">記録一覧
@@ -370,23 +382,92 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
 <!-- 設定 -->
 <div class="panel-view" id="panel-settings">
   <div class="page-header"><div class="page-title">設定</div></div>
+
+  <!-- プロフィール -->
   <div class="card">
-    <div class="card-hd">アカウント</div>
-    <div style="font-size:13px;color:var(--dim);margin-bottom:12px;" id="settingsEmail"></div>
-    <button class="ghost sm" onclick="signOut()">ログアウト</button>
+    <div class="card-hd">プロフィール</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+      <div id="settingsAvatar" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--purple));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">👤</div>
+      <div style="flex:1;">
+        <div id="settingsDisplayName" style="font-size:15px;font-weight:600;margin-bottom:2px;">読込中...</div>
+        <div id="settingsEmail" style="font-size:12px;color:var(--dim);"></div>
+      </div>
+    </div>
+    <label>表示名</label>
+    <input type="text" id="displayNameInput" placeholder="ファン名・ニックネーム" style="margin-bottom:8px;">
+    <button class="primary" style="width:100%;" onclick="saveDisplayName()">表示名を保存</button>
   </div>
+
+  <!-- 推し活スコア -->
+  <div class="card">
+    <div class="card-hd">推し活スコア <span style="font-size:10px;color:var(--dim);">今月</span></div>
+    <div id="cheerScore" style="text-align:center;padding:8px 0;">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:42px;font-weight:700;color:var(--pink);" id="scoreNum">-</div>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:12px;" id="scoreRank">計算中...</div>
+      <div id="scoreBreakdown" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;"></div>
+    </div>
+  </div>
+
+  <!-- プラン・割引 -->
   <div class="card">
     <div class="card-hd">プラン・割引</div>
     <div id="planInfo" style="margin-bottom:12px;"></div>
-    <div id="extensionStatus" style="background:var(--panel2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--dim);"></div>
+    <div id="extensionStatus" style="background:var(--panel2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--dim);margin-bottom:10px;"></div>
+    <!-- プラン比較表 -->
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:11px;">
+        <tr>
+          <th style="text-align:left;padding:6px 4px;color:var(--dim);border-bottom:1px solid var(--border);">機能</th>
+          <th style="text-align:center;padding:6px 4px;color:var(--dim);border-bottom:1px solid var(--border);">フリー</th>
+          <th style="text-align:center;padding:6px 4px;color:var(--calm);border-bottom:1px solid var(--border);">Std</th>
+          <th style="text-align:center;padding:6px 4px;color:var(--gold);border-bottom:1px solid var(--border);">Prm</th>
+        </tr>
+        <tr><td style="padding:5px 4px;color:var(--dim2);">推し登録</td><td style="text-align:center;color:var(--dim);">1人</td><td style="text-align:center;color:var(--calm);">5人</td><td style="text-align:center;color:var(--gold);">無制限</td></tr>
+        <tr style="background:var(--panel2);"><td style="padding:5px 4px;color:var(--dim2);">推し活ログ</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--calm);">✓</td><td style="text-align:center;color:var(--gold);">✓</td></tr>
+        <tr><td style="padding:5px 4px;color:var(--dim2);">コメント履歴</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--gold);">✓</td></tr>
+        <tr style="background:var(--panel2);"><td style="padding:5px 4px;color:var(--dim2);">年間グラフ</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--gold);">✓</td></tr>
+        <tr><td style="padding:5px 4px;color:var(--dim2);">PDF出力</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--gold);">✓</td></tr>
+        <tr style="background:var(--panel2);"><td style="padding:5px 4px;color:var(--dim2);">応援スタンプ</td><td style="text-align:center;color:var(--dim);">月3回</td><td style="text-align:center;color:var(--calm);">無制限</td><td style="text-align:center;color:var(--gold);">無制限</td></tr>
+      </table>
+    </div>
   </div>
+
+  <!-- 年間費用グラフ（プレミアム） -->
+  <div class="card" id="yearlyGraphCard">
+    <div class="card-hd">年間推し活費用 <span id="yearlyGraphGate" style="font-size:10px;color:var(--gold);">プレミアム</span></div>
+    <div id="yearlyGraph"><div class="empty"><div class="empty-icon">📊</div>データがありません</div></div>
+    <div id="yearlyGraphLocked" style="display:none;">
+      <div class="plan-gate"><div class="pg-icon">📊</div><p>年間グラフはプレミアムプランの機能です。</p></div>
+    </div>
+  </div>
+
+  <!-- PDF出力（プレミアム） -->
   <div class="card">
-    <div class="card-hd">通知</div>
-    <button class="ghost sm" onclick="requestNotificationPermission()">プッシュ通知を有効にする</button>
+    <div class="card-hd">推し活レポート PDF出力 <span style="font-size:10px;color:var(--gold);">プレミアム</span></div>
+    <div id="pdfContent">
+      <div style="font-size:12px;color:var(--dim);margin-bottom:10px;">今月の推し活を1枚のPDFにまとめます。</div>
+      <div style="display:flex;gap:8px;">
+        <select id="pdfTargetChannel" style="flex:1;min-height:auto;padding:8px;font-size:12px;margin:0;"></select>
+        <button class="primary" onclick="generatePDF()" style="white-space:nowrap;padding:10px 16px;font-size:13px;">PDF生成</button>
+      </div>
+    </div>
+    <div id="pdfLocked" style="display:none;">
+      <div class="plan-gate"><div class="pg-icon">📄</div><p>PDF出力はプレミアムプランの機能です。</p></div>
+    </div>
   </div>
+
+  <!-- 通知 -->
+  <div class="card">
+    <div class="card-hd">通知設定</div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:10px;">推しのLIVE開始・新動画をお知らせします。</div>
+    <button class="ghost sm" onclick="requestNotificationPermission()" id="notifBtn">プッシュ通知を有効にする</button>
+  </div>
+
+  <!-- 開発情報 -->
   <div class="card" style="border-color:rgba(155,138,251,.2);">
-    <div class="card-hd">開発情報</div>
-    <div style="font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace;">CheerDesk v0.1.0 (dev)<br>Supabase: lwbjidjidiulufoaumfl</div>
+    <div class="card-hd">アカウント操作</div>
+    <button class="ghost sm" onclick="signOut()">ログアウト</button>
+    <div style="font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace;margin-top:12px;">CheerDesk v0.2.0 · Supabase: lwbjidjidiulufoaumfl</div>
   </div>
 </div>
 
@@ -506,6 +587,18 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
   </div>
 </div>
 
+<!-- モーダル：ファンカード -->
+<div class="modal-overlay" id="fanCardModal">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title">ファンカード 📣</div>
+    <div id="fanCardContent"></div>
+    <div style="margin-top:8px;">
+      <button class="ghost full" onclick="closeModal('fanCardModal')">閉じる</button>
+    </div>
+  </div>
+</div>
+
 <!-- モーダル：チャンネル詳細 -->
 <div class="modal-overlay" id="channelDetailModal">
   <div class="modal-box">
@@ -540,6 +633,22 @@ async function onLogin(u){
   if(ud){CPlan=ud.plan||'free';updatePlanUI(ud);}
   await loadChannels();
   loadHomeData();renderCal();loadSchedule();loadLogs();loadComments();loadCheerHistory();
+  loadCheerScore();loadYearGraph();
+  // 設定タブのユーザー情報初期化
+  const{data:ud2}=await sb.from('users').select('*').eq('id',u.id).single();
+  if(ud2){
+    const dn=document.getElementById('settingsDisplayName');
+    const di=document.getElementById('displayNameInput');
+    if(dn)dn.textContent=ud2.display_name||u.email?.split('@')[0]||'未設定';
+    if(di)di.value=ud2.display_name||'';
+    updatePlanUI(ud2);
+    // PDF用チャンネルセレクトはloadChannels後に更新
+  }
+  // 通知許可状態確認
+  if('Notification' in window){
+    const nb=document.getElementById('notifBtn');
+    if(nb&&Notification.permission==='granted')nb.textContent='✓ プッシュ通知 有効';
+  }
 }
 function showAuth(){CU=null;document.getElementById('authScreen').style.display='flex';document.getElementById('appScreen').style.display='none';}
 
@@ -576,6 +685,7 @@ function switchTab(t){
   document.querySelectorAll('#topNav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   document.querySelectorAll('.panel-view').forEach(p=>p.classList.toggle('active',p.id==='panel-'+t));
   window.scrollTo(0,0);
+  if(t==='settings'){loadCheerScore();loadYearGraph();}
 }
 
 async function loadChannels(){
@@ -594,7 +704,7 @@ function renderChannelList(){
   if(!list.length){el.innerHTML=`<div class="empty"><div class="empty-icon">⭐</div>${CFilt==='all'?'まだ登録がありません':'このティアにチャンネルがありません'}</div>`;return;}
   el.innerHTML=list.map(uc=>{
     const ch=uc.channels;
-    const days=uc.followed_since?Math.floor((new Date()-new Date(uc.followed_since))/86400000):null;
+    const days=calcDays(uc.followed_since);
     return`<div class="ch-card" onclick="openChDetail('${uc.id}')">
       <div class="ch-avatar-placeholder">${pfIcon(ch.platform)}</div>
       <div class="ch-info">
@@ -620,6 +730,9 @@ function updateChSelects(){
     const s=document.getElementById(id);if(!s)return;
     s.innerHTML='<option value="">選択してください...</option>'+src.map(uc=>`<option value="${uc.channel_id}">${esc(uc.channels.name)}</option>`).join('');
   });
+  // PDF用・フィルター用
+  const pdfSel=document.getElementById('pdfTargetChannel');
+  if(pdfSel)pdfSel.innerHTML='<option value="">全推し</option>'+oshi.map(uc=>`<option value="${uc.channel_id}">${esc(uc.channels.name)}</option>`).join('');
   const lf=document.getElementById('logFilterChannel');
   if(lf)lf.innerHTML='<option value="">全推し</option>'+oshi.map(uc=>`<option value="${uc.channel_id}">${esc(uc.channels.name)}</option>`).join('');
   const cf=document.getElementById('commentFilterChannel');
@@ -651,15 +764,18 @@ async function addChannel(){
 function openChDetail(ucId){
   const uc=AChans.find(c=>c.id===ucId);if(!uc)return;
   CDetail=uc;const ch=uc.channels;
-  const days=uc.followed_since?Math.floor((new Date()-new Date(uc.followed_since))/86400000):null;
+  const days=calcDays(uc.followed_since);
+  const anniv=getAnniversary(uc);
   document.getElementById('channelDetailContent').innerHTML=`
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
       <div class="ch-avatar-placeholder" style="width:52px;height:52px;font-size:22px;">${pfIcon(ch.platform)}</div>
-      <div>
+      <div style="flex:1;">
         <div style="font-size:16px;font-weight:600;">${esc(ch.name)}</div>
-        <div style="font-size:12px;color:var(--dim);">${ch.platform}${days!==null?' · 推し歴<b style="color:var(--pink);">'+days+'日</b>':''}</div>
+        <div style="font-size:12px;color:var(--dim);margin-top:3px;display:flex;align-items:center;gap:6px;">${ch.platform} ${daysBadge(days)}</div>
       </div>
     </div>
+    ${anniv?`<div style="background:rgba(242,184,75,.1);border:1px solid rgba(242,184,75,.3);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:var(--gold);">${anniv.emoji} ${esc(ch.name)}を${anniv.msg}</div>`:''}
+    <button class="primary full" style="margin-bottom:14px;" onclick="openFanCard('${ucId}')">📣 ファンカードを見る</button>
     <div class="card-hd">ティアを変更</div>
     <div class="tier-btns" style="margin-bottom:16px;">
       <button class="tier-btn oshi ${uc.tier==='oshi'?'active':''}" onclick="changeTier('${ucId}','oshi',this)">⭐ 推し</button>
@@ -726,7 +842,16 @@ async function loadHomeData(){
   }
   const live=AChans.filter(c=>c.channels.is_live&&c.tier==='oshi');
   const bEl=document.getElementById('liveBanner');
-  if(bEl)bEl.innerHTML=live.length?live.map(uc=>`<div class="card" style="border-color:var(--live);background:rgba(255,107,91,.07);margin-bottom:10px;"><div style="display:flex;align-items:center;gap:10px;"><span class="dot"></span><div style="flex:1;"><div style="font-size:13.5px;font-weight:600;">${esc(uc.channels.name)}</div><div style="font-size:11px;color:var(--dim);">${esc(uc.channels.live_title||'配信中')}</div></div><span style="font-size:11px;color:var(--live);font-weight:600;">LIVE</span></div></div>`).join(''):'';
+  // 記念日チェック
+  const anniversaries=AChans.filter(c=>c.tier==='oshi').map(uc=>({uc,a:getAnniversary(uc)})).filter(x=>x.a);
+  let bannerHtml='';
+  anniversaries.forEach(({uc,a})=>{
+    bannerHtml+=`<div class="card" style="border-color:var(--gold);background:rgba(242,184,75,.07);margin-bottom:10px;"><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">${a.emoji}</span><div><div style="font-size:13.5px;font-weight:600;">${esc(uc.channels.name)}</div><div style="font-size:12px;color:var(--gold);">${a.msg}</div></div></div></div>`;
+  });
+  live.forEach(uc=>{
+    bannerHtml+=`<div class="card" style="border-color:var(--live);background:rgba(255,107,91,.07);margin-bottom:10px;"><div style="display:flex;align-items:center;gap:10px;"><span class="dot"></span><div style="flex:1;"><div style="font-size:13.5px;font-weight:600;">${esc(uc.channels.name)}</div><div style="font-size:11px;color:var(--dim);">${esc(uc.channels.live_title||'配信中')}</div></div><span style="font-size:11px;color:var(--live);font-weight:600;">LIVE</span></div></div>`;
+  });
+  if(bEl)bEl.innerHTML=bannerHtml;
 }
 
 function renderCal(){
@@ -793,12 +918,16 @@ async function loadLogs(){
   const amt=tm.reduce((s,l)=>s+(l.amount||0),0);
   document.getElementById('logTotalCount').textContent=tm.length;
   document.getElementById('logTotalAmount').textContent='¥'+amt.toLocaleString();
+  loadYearGraph();
   const el=document.getElementById('logList');if(!el)return;
   if(!data?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📝</div>まだログがありません</div>`;return;}
   el.innerHTML=data.map(l=>`<div class="log-item"><div class="log-type-icon ${l.log_type}">${liIcon(l.log_type)}</div><div class="log-info"><div class="log-title">${esc(l.title||liLbl(l.log_type))}</div><div class="log-meta">${l.channels?.name||''} · ${fmtD(l.logged_at)}</div></div>${l.amount?`<div class="log-amount">¥${l.amount.toLocaleString()}</div>`:''}</div>`).join('');
 }
 function openAddLogModal(){
-  if(CPlan==='free'){toast('推し活ログはスタンダード以上のプランで利用できます');return;}
+  if(CPlan==='free'){
+    toast('推し活ログはスタンダード以上のプランで利用できます');
+    return;
+  }
   document.getElementById('logDate').value=new Date().toISOString().split('T')[0];
   openModal('addLogModal');
 }
@@ -837,6 +966,7 @@ async function addComment(){
   const text=document.getElementById('commentText').value.trim();const type=document.getElementById('commentType').value;
   const amount=parseInt(document.getElementById('commentAmount').value)||null;const date=document.getElementById('commentDate').value;
   if(!text){toast('コメント内容を入力してください');return;}
+  if(!filterText(text))return;
   let isFirst=false;
   if(cid){const{data:ex}=await sb.from('comment_logs').select('id').eq('user_id',CU.id).eq('channel_id',cid).limit(1);isFirst=!ex?.length;}
   const pf=AChans.find(c=>c.channel_id===cid)?.channels.platform||'youtube';
@@ -874,6 +1004,7 @@ async function sendStamp(emoji){
 async function sendCheerMessage(){
   const cid=document.getElementById('cheerTargetChannel').value;const body=document.getElementById('cheerMessage').value.trim();const isAnon=document.getElementById('cheerAnon').checked;
   if(!cid){toast('推しを選んでください');return;}if(!body){toast('メッセージを入力してください');return;}
+  if(!filterText(body))return;
   const{error}=await sb.from('cheer_messages').insert({user_id:CU.id,channel_id:cid,message_type:'letter',body,is_anonymous:isAnon});
   if(error){toast('送信に失敗しました');return;}
   toast('💌 応援レターを送りました！');document.getElementById('cheerMessage').value='';loadCheerHistory();
@@ -924,6 +1055,225 @@ function stLbl(s){return{upcoming:'予定',live:'LIVE中',ended:'終了'}[s]||s;
 function fmtD(d){if(!d)return'';const dt=new Date(d);return`${dt.getFullYear()}/${dt.getMonth()+1}/${dt.getDate()}`;}
 function fmtT(d){if(!d)return'';const dt=new Date(d);return`${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}`;}
 function fmtDT(d){if(!d)return'';const dt=new Date(d);return`${dt.getFullYear()}/${dt.getMonth()+1}/${dt.getDate()} ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}`;}
+
+// ── 表示名保存 ──
+async function saveDisplayName(){
+  const name=document.getElementById('displayNameInput').value.trim();
+  if(!name){toast('表示名を入力してください');return;}
+  if(name.length>30){toast('表示名は30文字以内にしてください');return;}
+  const{error}=await sb.from('users').update({display_name:name}).eq('id',CU.id);
+  if(error){toast('保存に失敗しました');return;}
+  document.getElementById('settingsDisplayName').textContent=name;
+  toast('✓ 表示名を保存しました');
+}
+
+// ── 推し活スコア ──
+async function loadCheerScore(){
+  if(!CU)return;
+  const now=new Date();
+  const ms=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
+  const me=new Date(now.getFullYear(),now.getMonth()+1,0).toISOString().split('T')[0];
+  const[{data:logs},{data:coms},{data:cheers}]=await Promise.all([
+    sb.from('cheer_logs').select('amount').eq('user_id',CU.id).gte('logged_at',ms).lte('logged_at',me),
+    sb.from('comment_logs').select('comment_type,amount').eq('user_id',CU.id).gte('commented_at',ms+'T00:00:00').lte('commented_at',me+'T23:59:59'),
+    sb.from('cheer_messages').select('id').eq('user_id',CU.id).gte('sent_at',ms+'T00:00:00').lte('sent_at',me+'T23:59:59')
+  ]);
+  const logScore=(logs||[]).length*10;
+  const commentScore=(coms||[]).length*15;
+  const cheerScore=(cheers||[]).length*5;
+  const amtScore=Math.floor((logs||[]).reduce((s,l)=>s+(l.amount||0),0)/100);
+  const total=logScore+commentScore+cheerScore+amtScore;
+  const rank=total>=500?'💎 ダイヤ':total>=200?'🥇 ゴールド':total>=100?'🥈 シルバー':total>=50?'🥉 ブロンズ':'🌱 ビギナー';
+  const sn=document.getElementById('scoreNum');const sr=document.getElementById('scoreRank');const sb2=document.getElementById('scoreBreakdown');
+  if(sn)sn.textContent=total;
+  if(sr)sr.textContent=rank+' ランク';
+  if(sb2)sb2.innerHTML=`
+    <div style="background:var(--panel2);border-radius:8px;padding:8px;"><div style="font-size:16px;font-weight:500;color:var(--calm);">${logScore}</div><div style="font-size:10px;color:var(--dim);">ログ</div></div>
+    <div style="background:var(--panel2);border-radius:8px;padding:8px;"><div style="font-size:16px;font-weight:500;color:var(--blue);">${commentScore}</div><div style="font-size:10px;color:var(--dim);">コメント</div></div>
+    <div style="background:var(--panel2);border-radius:8px;padding:8px;"><div style="font-size:16px;font-weight:500;color:var(--purple);">${cheerScore}</div><div style="font-size:10px;color:var(--dim);">応援</div></div>`;
+}
+
+// ── 年間費用グラフ ──
+async function loadYearGraph(){
+  if(!CU)return;
+  const el=document.getElementById('logYearGraph');if(!el)return;
+  if(CPlan!=='premium'){
+    el.innerHTML=`<div class="plan-gate"><div class="pg-icon">📊</div><p>年間グラフはプレミアムプランの機能です。</p><button class="primary" onclick="switchTab('settings')">プランを確認</button></div>`;
+    return;
+  }
+  const now=new Date();
+  const{data}=await sb.from('cheer_logs').select('logged_at,amount').eq('user_id',CU.id).gte('logged_at',`${now.getFullYear()}-01-01`).order('logged_at');
+  const monthly=Array(12).fill(0);
+  (data||[]).forEach(l=>{const m=new Date(l.logged_at).getMonth();monthly[m]+=(l.amount||0);});
+  const max=Math.max(...monthly,1);
+  const total=monthly.reduce((s,v)=>s+v,0);
+  el.innerHTML=`
+    <div style="display:flex;align-items:flex-end;gap:3px;height:80px;margin-bottom:6px;">
+      ${monthly.map((v,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;"><div style="width:100%;background:${i===now.getMonth()?'var(--pink)':'var(--calm)'};border-radius:3px 3px 0 0;min-height:2px;height:${Math.max(Math.round((v/max)*66),2)}px;opacity:${i>now.getMonth()?.35:1};transition:height .3s;"></div><div style="font-size:9px;color:var(--dim);">${i+1}</div></div>`).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:4px;border-top:1px solid var(--border);padding-top:8px;">
+      <span>年間合計: <b style="color:var(--gold);">¥${total.toLocaleString()}</b></span>
+      <span>月平均: <b style="color:var(--text);">¥${Math.round(total/12).toLocaleString()}</b></span>
+    </div>`;
+}
+
+// ── 今月のサマリー自動生成 ──
+async function genMonthlySummary(){
+  const el=document.getElementById('monthlySummaryContent');
+  el.innerHTML='<div style="color:var(--dim);font-size:12px;padding:8px 0;">生成中...</div>';
+  const now=new Date();
+  const ms=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
+  const me=new Date(now.getFullYear(),now.getMonth()+1,0).toISOString().split('T')[0];
+  const[{data:logs},{data:coms},{data:cheers}]=await Promise.all([
+    sb.from('cheer_logs').select('*,channels(name)').eq('user_id',CU.id).gte('logged_at',ms).lte('logged_at',me),
+    sb.from('comment_logs').select('comment_type,amount').eq('user_id',CU.id).gte('commented_at',ms+'T00:00:00').lte('commented_at',me+'T23:59:59'),
+    sb.from('cheer_messages').select('id').eq('user_id',CU.id).gte('sent_at',ms+'T00:00:00').lte('sent_at',me+'T23:59:59')
+  ]);
+  const totalAmt=(logs||[]).reduce((s,l)=>s+(l.amount||0),0);
+  const superAmt=(coms||[]).filter(c=>c.comment_type==='superchat').reduce((s,c)=>s+(c.amount||0),0);
+  const oshiNames=[...new Set((logs||[]).map(l=>l.channels?.name).filter(Boolean))];
+  const m=now.getMonth()+1;
+  let txt=`📣 ${now.getFullYear()}年${m}月の推し活まとめ\n\n`;
+  if(oshiNames.length)txt+=`推し: ${oshiNames.join('・')}\n`;
+  txt+=`推し活ログ: ${(logs||[]).length}件\n`;
+  if(totalAmt>0)txt+=`推し活費用: ¥${totalAmt.toLocaleString()}\n`;
+  if((coms||[]).length>0)txt+=`コメント: ${(coms||[]).length}件\n`;
+  if(superAmt>0)txt+=`スパチャ: ¥${superAmt.toLocaleString()}\n`;
+  txt+=`応援送信: ${(cheers||[]).length}回\n\n今月も全力で推し活！💜\n#CheerDesk #推し活`;
+  el.innerHTML=`
+    <div style="background:var(--panel2);border-radius:10px;padding:12px;font-size:12.5px;line-height:1.75;white-space:pre-wrap;margin-bottom:10px;color:var(--text);">${esc(txt)}</div>
+    <div style="display:flex;gap:8px;">
+      <button class="ghost" style="flex:1;" onclick='navigator.clipboard.writeText(${JSON.stringify(txt)}).then(()=>toast("✓ コピーしました"))'>コピー</button>
+      <button class="ghost" style="flex:1;" onclick='window.open("https://twitter.com/intent/tweet?text="+encodeURIComponent(${JSON.stringify(txt)}),"_blank")'>𝕏 シェア</button>
+    </div>`;
+}
+
+// ── PDF生成 ──
+async function generatePDF(){
+  if(CPlan!=='premium'){toast('PDF出力はプレミアムプランの機能です');return;}
+  const cid=document.getElementById('pdfTargetChannel').value;
+  toast('📄 PDFを準備しています...');
+  const now=new Date();
+  const ms=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
+  const me=new Date(now.getFullYear(),now.getMonth()+1,0).toISOString().split('T')[0];
+  let q=sb.from('cheer_logs').select('*,channels(name)').eq('user_id',CU.id).gte('logged_at',ms).lte('logged_at',me).order('logged_at');
+  if(cid)q=q.eq('channel_id',cid);
+  const{data:logs}=await q;
+  const{data:ud}=await sb.from('users').select('display_name,email').eq('id',CU.id).single();
+  const fanName=ud?.display_name||ud?.email?.split('@')[0]||'ファン';
+  const totalAmt=(logs||[]).reduce((s,l)=>s+(l.amount||0),0);
+  const chName=cid?AChans.find(c=>c.channel_id===cid)?.channels?.name||'全推し':'全推し';
+  const typeMap={watch:'視聴',goods:'グッズ',superchat:'スパチャ',event:'イベント',other:'その他'};
+  const rows=(logs||[]).map(l=>`<tr><td>${l.logged_at}</td><td>${typeMap[l.log_type]||l.log_type}</td><td>${esc(l.title||'')}</td><td style="text-align:right;">${l.amount?'¥'+l.amount.toLocaleString():'-'}</td></tr>`).join('');
+  const html=`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>推し活レポート</title>
+  <style>body{font-family:'Hiragino Sans','Yu Gothic',sans-serif;color:#1a1a1a;padding:40px;max-width:640px;margin:0 auto;}
+  h1{font-size:20px;border-bottom:3px solid #E0629E;padding-bottom:8px;color:#E0629E;margin-bottom:4px;}
+  .meta{font-size:12px;color:#888;margin-bottom:20px;}
+  .stats{display:flex;gap:16px;margin:20px 0;}
+  .stat{flex:1;background:#fdf0f6;border-radius:8px;padding:12px;text-align:center;}
+  .stat .n{font-size:22px;font-weight:700;color:#E0629E;}
+  .stat .l{font-size:11px;color:#888;margin-top:3px;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{background:#E0629E;color:#fff;padding:7px 10px;text-align:left;}
+  td{padding:7px 10px;border-bottom:1px solid #eee;}
+  tr:nth-child(even) td{background:#fafafa;}
+  .footer{margin-top:24px;text-align:center;font-size:11px;color:#aaa;}</style></head>
+  <body><h1>📣 推し活レポート</h1>
+  <div class="meta">${esc(fanName)} · ${esc(chName)} · ${now.getFullYear()}年${now.getMonth()+1}月</div>
+  <div class="stats">
+    <div class="stat"><div class="n">${(logs||[]).length}</div><div class="l">ログ件数</div></div>
+    <div class="stat"><div class="n">¥${totalAmt.toLocaleString()}</div><div class="l">合計費用</div></div>
+    <div class="stat"><div class="n">¥${(logs||[]).length?Math.round(totalAmt/(logs||[]).length).toLocaleString():0}</div><div class="l">平均費用</div></div>
+  </div>
+  ${rows?`<table><tr><th>日付</th><th>種類</th><th>内容</th><th>費用</th></tr>${rows}</table>`:'<p style="color:#888;text-align:center;padding:20px;">ログがありません</p>'}
+  <div class="footer">Generated by CheerDesk · ${now.toLocaleDateString('ja-JP')}</div></body></html>`;
+  const w=window.open('','_blank');
+  if(!w){toast('ポップアップがブロックされました。許可してください。');return;}
+  w.document.write(html);w.document.close();
+  setTimeout(()=>{w.print();},500);
+  toast('✓ 印刷画面を開きました。「PDFとして保存」を選択してください。');
+}
+
+// ── 不適切言葉フィルター ──
+const NG=['死ね','殺す','殺して','うざい','きもい','消えろ','死んで','クズ','ゴミ','氏ね','カス','うせろ','死ろ','ころす','しね'];
+function filterText(text){
+  const t=text.toLowerCase();
+  const hit=NG.find(w=>t.includes(w));
+  if(hit){toast('⚠️ 不適切な言葉が含まれています。内容を確認してください。');return false;}
+  return true;
+}
+
+// ── 推し歴カウンター ──
+function calcDays(since){if(!since)return null;return Math.floor((new Date()-new Date(since))/86400000);}
+function daysBadge(days){
+  if(days===null)return'';
+  if(days>=365)return`<span style="background:rgba(242,184,75,.15);border:1px solid var(--gold);color:var(--gold);border-radius:20px;padding:2px 8px;font-size:10px;font-family:'IBM Plex Mono',monospace;">推し歴${Math.floor(days/365)}年</span>`;
+  if(days>=30)return`<span style="background:rgba(224,98,158,.12);border:1px solid var(--pink);color:var(--pink);border-radius:20px;padding:2px 8px;font-size:10px;font-family:'IBM Plex Mono',monospace;">推し歴${Math.floor(days/30)}ヶ月</span>`;
+  return`<span style="background:var(--panel2);border:1px solid var(--border);color:var(--dim);border-radius:20px;padding:2px 8px;font-size:10px;font-family:'IBM Plex Mono',monospace;">推し歴${days}日</span>`;
+}
+
+// ── 記念日チェック → ホームバナー ──
+function getAnniversary(uc){
+  const days=calcDays(uc.followed_since);if(days===null)return null;
+  if(days===1)return{msg:'推し始めて1日！',emoji:'🎉'};
+  if(days===7)return{msg:'推し始めて1週間！',emoji:'🎉'};
+  if(days===30)return{msg:'推し始めて1ヶ月！',emoji:'🎊'};
+  if(days===100)return{msg:'推し始めて100日！',emoji:'🎊'};
+  if(days===365)return{msg:'推し始めて1周年！',emoji:'🎂'};
+  if(days>365&&days%365===0)return{msg:`推し始めて${days/365}周年！`,emoji:'🎂'};
+  return null;
+}
+
+// ── ファンカード生成 ──
+async function openFanCard(ucId){
+  const uc=AChans.find(c=>c.id===ucId);if(!uc)return;
+  const ch=uc.channels;const days=calcDays(uc.followed_since);const now=new Date();
+  const[{data:logs},{data:coms},{data:cheers}]=await Promise.all([
+    sb.from('cheer_logs').select('amount').eq('user_id',CU.id).eq('channel_id',uc.channel_id),
+    sb.from('comment_logs').select('amount,comment_type').eq('user_id',CU.id).eq('channel_id',uc.channel_id),
+    sb.from('cheer_messages').select('id').eq('user_id',CU.id).eq('channel_id',uc.channel_id)
+  ]);
+  const totalAmt=(logs||[]).reduce((s,l)=>s+(l.amount||0),0);
+  const {data:ud}=await sb.from('users').select('display_name').eq('id',CU.id).single();
+  const fanName=ud?.display_name||CU.email?.split('@')[0]||'ファン';
+  document.getElementById('fanCardContent').innerHTML=`
+    <div style="background:linear-gradient(135deg,#1A1C26 0%,#20152A 100%);border:1px solid var(--pink);border-radius:16px;padding:24px;text-align:center;">
+      <div style="font-size:10px;color:var(--pink);font-family:'IBM Plex Mono',monospace;letter-spacing:2px;margin-bottom:8px;">FAN CARD</div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:var(--pink);margin-bottom:16px;">${esc(ch.name)}</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;">
+        <div style="background:rgba(255,255,255,.05);border-radius:10px;padding:10px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--gold);">${days!==null?days:'?'}<span style="font-size:11px;">日</span></div>
+          <div style="font-size:10px;color:var(--dim);margin-top:2px;">推し歴</div>
+        </div>
+        <div style="background:rgba(255,255,255,.05);border-radius:10px;padding:10px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--calm);">${(logs||[]).length}</div>
+          <div style="font-size:10px;color:var(--dim);margin-top:2px;">推し活ログ</div>
+        </div>
+        <div style="background:rgba(255,255,255,.05);border-radius:10px;padding:10px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:18px;color:var(--pink);">¥${totalAmt.toLocaleString()}</div>
+          <div style="font-size:10px;color:var(--dim);margin-top:2px;">推し活費用</div>
+        </div>
+        <div style="background:rgba(255,255,255,.05);border-radius:10px;padding:10px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--purple);">${(cheers||[]).length}</div>
+          <div style="font-size:10px;color:var(--dim);margin-top:2px;">応援送信</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--dim);border-top:1px solid var(--border);padding-top:10px;">${esc(fanName)} · ${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="ghost" style="flex:1;" onclick="shareToX('${esc(ch.name).replace(/'/g,"\\'")}',${days??0},${(logs||[]).length},${totalAmt})">𝕏 でシェア</button>
+      <button class="ghost" style="flex:1;" onclick="copyCardText('${esc(ch.name).replace(/'/g,"\\'")}',${days??0},${(logs||[]).length},${totalAmt})">テキストコピー</button>
+    </div>`;
+  openModal('fanCardModal');
+}
+function shareToX(n,days,cnt,amt){
+  const t=`📣 ${n} のファンカード\n\n推し歴: ${days}日\n推し活ログ: ${cnt}件\n推し活費用: ¥${amt.toLocaleString()}\n\n#CheerDesk #推し活`;
+  window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(t),'_blank');
+}
+function copyCardText(n,days,cnt,amt){
+  const t=`📣 ${n} のファンカード\n推し歴: ${days}日 / ログ: ${cnt}件 / 費用: ¥${amt.toLocaleString()}\n#CheerDesk`;
+  navigator.clipboard.writeText(t).then(()=>toast('✓ コピーしました'));
+}
 </script>
 </body>
 </html>
