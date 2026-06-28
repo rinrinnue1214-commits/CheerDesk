@@ -181,9 +181,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email">
     <label>パスワード</label>
     <input type="password" id="auth-password" placeholder="8文字以上" autocomplete="current-password">
-    <div id="tosRow" style="display:none;flex-direction:row;gap:8px;align-items:flex-start;margin-bottom:14px;">
-      <input type="checkbox" id="auth-tos" style="width:auto;min-height:auto;margin:3px 0 0;accent-color:var(--pink);">
-      <label for="auth-tos" style="margin:0;font-size:12px;color:var(--dim);">利用規約に同意します</label>
+    <div id="tosRow" style="display:none;flex-direction:column;gap:6px;margin-bottom:14px;">
+      <div style="display:flex;gap:8px;align-items:flex-start;">
+        <input type="checkbox" id="auth-tos" style="width:18px;height:18px;min-height:auto;margin:2px 0 0;flex-shrink:0;accent-color:var(--pink);cursor:pointer;">
+        <label for="auth-tos" style="margin:0;font-size:12px;color:var(--dim);cursor:pointer;">利用規約に同意します</label>
+      </div>
     </div>
     <button class="primary full" id="authSubmitBtn" onclick="submitAuth()">ログイン</button>
   </div>
@@ -545,7 +547,7 @@ function switchAuthTab(m){
   document.getElementById('tabSignIn').className='auth-tab'+(m==='signin'?' active':'');
   document.getElementById('tabSignUp').className='auth-tab'+(m==='signup'?' active':'');
   document.getElementById('authSubmitBtn').textContent=m==='signin'?'ログイン':'新規登録';
-  document.getElementById('tosRow').style.display=m==='signup'?'flex':'none';
+  document.getElementById('tosRow').style.display=m==='signup'?'block':'none';
   document.getElementById('authMsg').textContent='';
 }
 async function submitAuth(){
