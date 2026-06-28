@@ -445,8 +445,41 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <div class="card-hd">プラン・割引</div>
     <div id="planInfo" style="margin-bottom:12px;"></div>
     <div id="extensionStatus" style="background:var(--panel2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--dim);margin-bottom:10px;"></div>
+
+    <!-- プランアップグレードUI -->
+    <div id="upgradeUI">
+      <div style="font-size:12px;color:var(--dim);margin-bottom:10px;">プランをアップグレードして推し活をもっと楽しもう。</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div style="background:var(--panel2);border:1px solid var(--calm);border-radius:10px;padding:12px;">
+          <div style="font-size:11px;color:var(--calm);font-weight:600;margin-bottom:4px;">スタンダード</div>
+          <div style="font-size:18px;font-weight:600;font-family:'IBM Plex Mono',monospace;">¥780<span style="font-size:11px;color:var(--dim);">/月</span></div>
+          <div style="font-size:10px;color:var(--dim);margin-bottom:8px;">年払いで¥580/月</div>
+          <div style="display:flex;gap:4px;flex-direction:column;">
+            <button class="primary" style="font-size:12px;padding:8px;width:100%;" onclick="startCheckout('standard','monthly')">月払いで始める</button>
+            <button class="ghost sm" style="width:100%;font-size:11px;" onclick="startCheckout('standard','annual')">年払い（¥6,960）</button>
+          </div>
+        </div>
+        <div style="background:var(--panel2);border:1px solid var(--gold);border-radius:10px;padding:12px;position:relative;">
+          <div style="position:absolute;top:-9px;left:12px;background:var(--gold);color:#241A04;font-size:9px;font-weight:600;padding:2px 8px;border-radius:10px;">おすすめ</div>
+          <div style="font-size:11px;color:var(--gold);font-weight:600;margin-bottom:4px;">プレミアム</div>
+          <div style="font-size:18px;font-weight:600;font-family:'IBM Plex Mono',monospace;">¥1,580<span style="font-size:11px;color:var(--dim);">/月</span></div>
+          <div style="font-size:10px;color:var(--dim);margin-bottom:8px;">年払い+拡張で¥980/月</div>
+          <div style="display:flex;gap:4px;flex-direction:column;">
+            <button class="primary" style="font-size:12px;padding:8px;width:100%;background:var(--gold);color:#241A04;" onclick="startCheckout('premium','monthly')">月払いで始める</button>
+            <button class="ghost sm" style="width:100%;font-size:11px;" onclick="startCheckout('premium','annual')">年払い（¥15,360）</button>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--dim);text-align:center;">Stripeの安全な決済ページに移動します</div>
+    </div>
+
+    <!-- 有料プランの場合：ポータルボタン -->
+    <div id="portalUI" style="display:none;">
+      <button class="ghost" style="width:100%;" onclick="openCustomerPortal()">プランの変更・解約はこちら</button>
+    </div>
+
     <!-- プラン比較表 -->
-    <div style="overflow-x:auto;">
+    <div style="overflow-x:auto;margin-top:14px;">
       <table style="width:100%;border-collapse:collapse;font-size:11px;">
         <tr>
           <th style="text-align:left;padding:6px 4px;color:var(--dim);border-bottom:1px solid var(--border);">機能</th>
@@ -874,7 +907,7 @@ async function onLogin(u){
   document.getElementById('appScreen').style.display='block';
   document.getElementById('settingsEmail').textContent=u.email;
   const {data:ud}=await sb.from('users').select('*').eq('id',u.id).single();
-  if(ud){CPlan=ud.plan||'free';updatePlanUI(ud);}
+  if(ud){CPlan=ud.plan||'free';updatePlanUI(ud);updateUpgradeUI(ud);}
   await loadChannels();
   loadHomeData();renderCal();loadSchedule();loadLogs();loadComments();loadCheerHistory();
   loadCheerScore();loadYearGraph();
@@ -899,6 +932,10 @@ async function onLogin(u){
   checkOnboarding();
   // プロフィールURL初期化
   initProfileUrl();
+  // 決済完了チェック
+  checkPaymentResult();
+  // Service Worker初期化
+  initServiceWorker();
 }
 function showAuth(){CU=null;document.getElementById('authScreen').style.display='flex';document.getElementById('appScreen').style.display='none';}
 
@@ -1560,7 +1597,81 @@ async function openProfilePreview(){
   openModal('fanCardModal');
 }
 
+// ── Stripe Checkout ──
+const WORKER_URL='https://cheerdesk-api.rinrinnue1214.workers.dev';
+
+async function startCheckout(plan,cycle){
+  if(!CU){toast('ログインが必要です');return;}
+  const btn=event.target;
+  btn.disabled=true;btn.textContent='処理中...';
+  try{
+    const res=await fetch(WORKER_URL+'/api/checkout',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({plan,cycle,userId:CU.id,userEmail:CU.email})
+    });
+    const data=await res.json();
+    if(data.url){
+      window.location.href=data.url;
+    } else {
+      toast('決済ページの作成に失敗しました: '+(data.error||'不明なエラー'));
+      btn.disabled=false;btn.textContent=cycle==='monthly'?'月払いで始める':'年払いで始める';
+    }
+  }catch(e){
+    toast('エラーが発生しました。しばらく後にもう一度お試しください。');
+    btn.disabled=false;btn.textContent=cycle==='monthly'?'月払いで始める':'年払いで始める';
+  }
+}
+
+async function openCustomerPortal(){
+  if(!CU)return;
+  const btn=event.target;btn.disabled=true;btn.textContent='処理中...';
+  try{
+    const res=await fetch(WORKER_URL+'/api/portal',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId:CU.id})
+    });
+    const data=await res.json();
+    if(data.url) window.location.href=data.url;
+    else toast('ポータルの起動に失敗しました');
+  }catch(e){
+    toast('エラーが発生しました');
+  }
+  btn.disabled=false;btn.textContent='プランの変更・解約はこちら';
+}
+
+// ── 決済完了後の処理（URLパラメータから検出）──
+async function checkPaymentResult(){
+  const params=new URLSearchParams(location.search);
+  if(params.get('payment')==='success'){
+    toast('🎉 プランのアップグレードが完了しました！');
+    // URLをクリーンに
+    history.replaceState({},'',location.pathname);
+    // プラン情報を再取得
+    const{data:ud}=await sb.from('users').select('*').eq('id',CU.id).single();
+    if(ud){CPlan=ud.plan||'free';updatePlanUI(ud);updateUpgradeUI(ud);}
+  } else if(params.get('payment')==='cancel'){
+    toast('決済をキャンセルしました');
+    history.replaceState({},'',location.pathname);
+  }
+}
+
+// ── アップグレードUIの表示切り替え ──
+function updateUpgradeUI(ud){
+  const upgradeUI=document.getElementById('upgradeUI');
+  const portalUI=document.getElementById('portalUI');
+  if(ud?.plan&&ud.plan!=='free'){
+    if(upgradeUI)upgradeUI.style.display='none';
+    if(portalUI)portalUI.style.display='block';
+  } else {
+    if(upgradeUI)upgradeUI.style.display='block';
+    if(portalUI)portalUI.style.display='none';
+  }
+}
+
 // ── 通知許可 ──
+async function revokeExt(){
   if(!confirm('拡張割引を解除しますか？翌月から通常料金になります。'))return;
   await sb.from('users').update({extension_verified:false,extension_verified_at:null}).eq('id',CU.id);
   toast('✓ 拡張割引を解除しました');
@@ -1654,18 +1765,80 @@ function incStampCount(){
   localStorage.setItem(key,count+1);
 }
 
-// ── 通知許可状態リアルタイム反映 ──
+// ── 通知許可・Service Worker登録・Push購読 ──
+const VAPID_PUBLIC_KEY = 'BNd0AxoGGtTTPxPZQgtbcF2giXXyoyCSVdfNO0uUbMKSTJSHEmWM6GHfPBlREO5uriPjxdeLfYY9geQvkBLD7hU';
+
 async function requestNotificationPermission(){
-  if(!('Notification'in window)){toast('このブラウザは通知に対応していません');return;}
-  const p=await Notification.requestPermission();
+  if(!('Notification'in window)||!('serviceWorker'in navigator)){
+    toast('このブラウザはプッシュ通知に対応していません');return;
+  }
   const nb=document.getElementById('notifBtn');
-  if(p==='granted'){
-    toast('✓ 通知を有効にしました');
-    if(nb)nb.textContent='✓ プッシュ通知 有効';
-    if(nb)nb.style.color='var(--calm)';
-  } else {
+  if(nb){nb.disabled=true;nb.textContent='設定中...';}
+
+  // 許可を要求
+  const p=await Notification.requestPermission();
+  if(p!=='granted'){
     toast('通知が許可されませんでした');
-    if(nb)nb.textContent='プッシュ通知を有効にする（ブラウザで許可が必要）';
+    if(nb){nb.disabled=false;nb.textContent='プッシュ通知を有効にする';}
+    return;
+  }
+
+  try{
+    // Service Worker登録
+    const reg=await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
+
+    // 既存の購読を確認
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub){
+      // 新規購読
+      sub=await reg.pushManager.subscribe({
+        userVisibleOnly:true,
+        applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+
+    // Supabaseに購読情報を保存
+    const subJson=sub.toJSON();
+    const{error}=await sb.from('push_subscriptions').upsert({
+      user_id:CU.id,
+      endpoint:subJson.endpoint,
+      p256dh:subJson.keys.p256dh,
+      auth:subJson.keys.auth,
+    },{onConflict:'user_id,endpoint'});
+
+    if(error)throw error;
+
+    toast('✓ プッシュ通知を有効にしました');
+    if(nb){nb.textContent='✓ プッシュ通知 有効';nb.style.color='var(--calm)';nb.disabled=false;}
+  }catch(e){
+    console.error('Push subscription error:',e);
+    toast('通知の設定に失敗しました: '+e.message);
+    if(nb){nb.disabled=false;nb.textContent='プッシュ通知を有効にする';}
+  }
+}
+
+function urlBase64ToUint8Array(base64String){
+  const padding='='.repeat((4-base64String.length%4)%4);
+  const base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
+  const rawData=window.atob(base64);
+  const outputArray=new Uint8Array(rawData.length);
+  for(let i=0;i<rawData.length;++i) outputArray[i]=rawData.charCodeAt(i);
+  return outputArray;
+}
+
+// Service Worker起動時チェック
+async function initServiceWorker(){
+  if(!('serviceWorker'in navigator))return;
+  try{
+    await navigator.serviceWorker.register('/sw.js');
+    // 既に許可済みなら購読状態を確認
+    if(Notification.permission==='granted'){
+      const nb=document.getElementById('notifBtn');
+      if(nb){nb.textContent='✓ プッシュ通知 有効';nb.style.color='var(--calm)';}
+    }
+  }catch(e){
+    console.warn('SW registration failed:',e);
   }
 }
 
