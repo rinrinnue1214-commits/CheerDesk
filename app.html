@@ -546,11 +546,12 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <div class="modal-handle"></div>
     <div class="modal-title">チャンネルを追加</div>
     <label>プラットフォーム</label>
-    <select id="newChPlatform">
+    <select id="newChPlatform" onchange="updatePlatformPlaceholder()">
       <option value="youtube">YouTube</option>
       <option value="twitch">Twitch</option>
       <option value="tiktok">TikTok</option>
       <option value="niconico">ニコニコ</option>
+      <option value="other">その他</option>
     </select>
     <label>チャンネルID / ユーザー名</label>
     <input type="text" id="newChPlatformId" placeholder="例: @channelname">
@@ -576,7 +577,16 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     </div>
     <input type="hidden" id="newChTier" value="oshi">
     <label>推し始めた日（推し歴カウンター用）</label>
-    <input type="date" id="newChFollowedSince">
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">
+      <input type="text" id="newChFollowedSinceText" placeholder="例: 2024/04/01 または 20240401"
+        style="flex:1;margin:0;"
+        oninput="syncDateFromText(this.value)"
+        onfocus="this.select()">
+      <input type="date" id="newChFollowedSince"
+        style="width:auto;min-height:auto;padding:10px 8px;margin:0;font-size:13px;"
+        oninput="syncDateFromPicker(this.value)">
+    </div>
+    <div style="font-size:11px;color:var(--dim);margin-bottom:10px;">テキストで直接入力するか、カレンダーアイコンから選択できます</div>
     <div style="display:flex;gap:8px;margin-top:4px;">
       <button class="ghost" onclick="closeModal('addChannelModal')">キャンセル</button>
       <button class="primary" style="flex:1;" onclick="addChannel()">追加する</button>
@@ -1068,8 +1078,12 @@ async function addChannel(){
   const name=document.getElementById('newChName').value.trim();
   const pf=document.getElementById('newChPlatform').value;
   const tier=document.getElementById('newChTier').value;
-  const since=document.getElementById('newChFollowedSince').value||null;
   const emoji=document.getElementById('newChEmoji').value||null;
+  let since=document.getElementById('newChFollowedSince').value||null;
+  if(!since){
+    const tv=document.getElementById('newChFollowedSinceText')?.value?.trim();
+    if(tv){const c=tv.replace(/[^0-9]/g,'');if(c.length===8)since=`${c.slice(0,4)}-${c.slice(4,6)}-${c.slice(6,8)}`;}
+  }
   if(!pid||!name){toast('チャンネルIDと名前を入力してください');return;}
   const oshiCnt=AChans.filter(c=>c.tier==='oshi').length;
   if(tier==='oshi'){
@@ -1084,6 +1098,7 @@ async function addChannel(){
   document.getElementById('newChPlatformId').value='';
   document.getElementById('newChName').value='';
   document.getElementById('newChFollowedSince').value='';
+  const ft=document.getElementById('newChFollowedSinceText');if(ft)ft.value='';
   document.getElementById('newChEmoji').value='';
   document.querySelectorAll('#emojiPicker span').forEach(s=>s.style.background='');
   await loadChannels();
@@ -1760,6 +1775,33 @@ async function deleteSchedule(id){
   toast('✓ 削除しました');loadSchedule();
 }
 
+// ── プラットフォームplaceholder更新 ──
+function updatePlatformPlaceholder(){
+  const pf=document.getElementById('newChPlatform').value;
+  const el=document.getElementById('newChPlatformId');
+  const map={youtube:'例: @channelname または UCxxxxxx',twitch:'例: streamer_name',tiktok:'例: @username',niconico:'例: user/12345678',other:'チャンネルID・URLなど'};
+  if(el)el.placeholder=map[pf]||'チャンネルID';
+}
+
+// ── 推し始めた日：テキスト→ピッカー同期 ──
+function syncDateFromText(val){
+  const clean=val.replace(/[^0-9]/g,'');
+  if(clean.length===8){
+    const y=clean.slice(0,4),m=clean.slice(4,6),d=clean.slice(6,8);
+    const iso=`${y}-${m}-${d}`;
+    const picker=document.getElementById('newChFollowedSince');
+    if(picker)picker.value=iso;
+  }
+}
+
+// ── 推し始めた日：ピッカー→テキスト同期 ──
+function syncDateFromPicker(val){
+  if(!val)return;
+  const[y,m,d]=val.split('-');
+  const txt=document.getElementById('newChFollowedSinceText');
+  if(txt)txt.value=`${y}/${m}/${d}`;
+}
+
 // ── 絵文字アイコン選択 ──
 function selectEmoji(el,emoji){
   document.querySelectorAll('#emojiPicker span').forEach(s=>s.style.background='');
@@ -2016,19 +2058,22 @@ async function generatePDF(){
 }
 
 // ── オンボーディング ──
-function checkOnboarding(){
-  if(!localStorage.getItem('cd_onboarded')){
+async function checkOnboarding(){
+  if(!CU)return;
+  // Supabaseでオンボーディング完了フラグを確認
+  const{data:ud}=await sb.from('users').select('onboarded').eq('id',CU.id).single();
+  if(!ud?.onboarded){
     document.getElementById('onboardingScreen').style.display='flex';
   }
 }
-function finishOnboarding(){
-  localStorage.setItem('cd_onboarded','1');
+async function finishOnboarding(){
+  await sb.from('users').update({onboarded:true}).eq('id',CU.id);
   document.getElementById('onboardingScreen').style.display='none';
   switchTab('channels');
   setTimeout(()=>openAddChannelModal(),300);
 }
 function skipOnboarding(){
-  localStorage.setItem('cd_onboarded','1');
+  sb.from('users').update({onboarded:true}).eq('id',CU.id);
   document.getElementById('onboardingScreen').style.display='none';
 }
 
