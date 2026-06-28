@@ -525,7 +525,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
   <div class="card">
     <div class="card-hd">通知設定</div>
     <div style="font-size:12px;color:var(--dim);margin-bottom:10px;">推しのLIVE開始・新動画をお知らせします。</div>
-    <button class="ghost sm" onclick="requestNotificationPermission()" id="notifBtn">プッシュ通知を有効にする</button>
+    <button class="ghost sm" onclick="toggleNotification()" id="notifBtn">プッシュ通知を有効にする</button>
   </div>
 
   <!-- 開発情報 -->
@@ -1840,6 +1840,26 @@ function incStampCount(){
   localStorage.setItem(key,count+1);
 }
 
+async function toggleNotification(){
+  if(!('Notification'in window)||!('serviceWorker'in navigator)){
+    toast('このブラウザはプッシュ通知に対応していません');return;
+  }
+  const nb=document.getElementById('notifBtn');
+  const reg=await navigator.serviceWorker.getRegistration('/sw.js');
+  const sub=reg?await reg.pushManager.getSubscription():null;
+
+  if(sub){
+    // 無効化
+    await sub.unsubscribe();
+    await sb.from('push_subscriptions').delete().eq('user_id',CU.id).eq('endpoint',sub.endpoint);
+    toast('プッシュ通知を無効にしました');
+    if(nb){nb.textContent='プッシュ通知を有効にする';nb.style.color='';nb.style.borderColor='';}
+  } else {
+    // 有効化
+    await requestNotificationPermission();
+  }
+}
+
 // ── 通知許可・Service Worker登録・Push購読 ──
 const VAPID_PUBLIC_KEY = 'BNd0AxoGGtTTPxPZQgtbcF2giXXyoyCSVdfNO0uUbMKSTJSHEmWM6GHfPBlREO5uriPjxdeLfYY9geQvkBLD7hU';
 
@@ -1885,7 +1905,7 @@ async function requestNotificationPermission(){
     if(error)throw error;
 
     toast('✓ プッシュ通知を有効にしました');
-    if(nb){nb.textContent='✓ プッシュ通知 有効';nb.style.color='var(--calm)';nb.disabled=false;}
+    if(nb){nb.textContent='✓ プッシュ通知 有効（タップで無効化）';nb.style.color='var(--calm)';nb.disabled=false;}
   }catch(e){
     console.error('Push subscription error:',e);
     toast('通知の設定に失敗しました: '+e.message);
@@ -1906,11 +1926,14 @@ function urlBase64ToUint8Array(base64String){
 async function initServiceWorker(){
   if(!('serviceWorker'in navigator))return;
   try{
-    await navigator.serviceWorker.register('/sw.js');
-    // 既に許可済みなら購読状態を確認
-    if(Notification.permission==='granted'){
-      const nb=document.getElementById('notifBtn');
-      if(nb){nb.textContent='✓ プッシュ通知 有効';nb.style.color='var(--calm)';}
+    const reg=await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.getSubscription();
+    const nb=document.getElementById('notifBtn');
+    if(sub&&Notification.permission==='granted'){
+      if(nb){nb.textContent='✓ プッシュ通知 有効（タップで無効化）';nb.style.color='var(--calm)';}
+    } else {
+      if(nb){nb.textContent='プッシュ通知を有効にする';nb.style.color='';}
     }
   }catch(e){
     console.warn('SW registration failed:',e);
@@ -2130,17 +2153,22 @@ function getAnniversary(uc){
 }
 
 // ── ファンカード生成 ──
+let _fcData={};
 async function openFanCard(ucId){
   const uc=AChans.find(c=>c.id===ucId);if(!uc)return;
   const ch=uc.channels;const days=calcDays(uc.followed_since);const now=new Date();
+  document.getElementById('fanCardContent').innerHTML='<div style="text-align:center;padding:20px;color:var(--dim);">読込中...</div>';
+  openModal('fanCardModal');
   const[{data:logs},{data:coms},{data:cheers}]=await Promise.all([
     sb.from('cheer_logs').select('amount').eq('user_id',CU.id).eq('channel_id',uc.channel_id),
     sb.from('comment_logs').select('amount,comment_type').eq('user_id',CU.id).eq('channel_id',uc.channel_id),
     sb.from('cheer_messages').select('id').eq('user_id',CU.id).eq('channel_id',uc.channel_id)
   ]);
   const totalAmt=(logs||[]).reduce((s,l)=>s+(l.amount||0),0);
-  const {data:ud}=await sb.from('users').select('display_name').eq('id',CU.id).single();
+  const{data:ud}=await sb.from('users').select('display_name').eq('id',CU.id).single();
   const fanName=ud?.display_name||CU.email?.split('@')[0]||'ファン';
+  // グローバル変数に保存（onclick内でJSON埋め込みを避けるため）
+  _fcData={chName:ch.name,days:days??0,logCnt:(logs||[]).length,amt:totalAmt,cheerCnt:(cheers||[]).length,ucId};
   document.getElementById('fanCardContent').innerHTML=`
     <div style="background:linear-gradient(135deg,#1A1C26 0%,#20152A 100%);border:1px solid var(--pink);border-radius:16px;padding:24px;text-align:center;">
       <div style="font-size:10px;color:var(--pink);font-family:'IBM Plex Mono',monospace;letter-spacing:2px;margin-bottom:8px;">FAN CARD</div>
@@ -2166,11 +2194,10 @@ async function openFanCard(ucId){
       <div style="font-size:11px;color:var(--dim);border-top:1px solid var(--border);padding-top:10px;">${esc(fanName)} · ${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}</div>
     </div>
     <div style="display:flex;gap:8px;margin-top:12px;">
-      <button class="ghost" style="flex:1;" onclick='shareToX(${JSON.stringify(ch.name)},${days??0},${(logs||[]).length},${totalAmt})'>𝕏 でシェア</button>
-      <button class="ghost" style="flex:1;" onclick='copyCardText(${JSON.stringify(ch.name)},${days??0},${(logs||[]).length},${totalAmt})'>テキストコピー</button>
-      <button class="ghost" style="flex:1;" onclick='generateShareImage("${ucId}")'>画像保存</button>
+      <button class="ghost" style="flex:1;" onclick="shareToX(_fcData.chName,_fcData.days,_fcData.logCnt,_fcData.amt)">𝕏 でシェア</button>
+      <button class="ghost" style="flex:1;" onclick="copyCardText(_fcData.chName,_fcData.days,_fcData.logCnt,_fcData.amt)">テキストコピー</button>
+      <button class="ghost" style="flex:1;" onclick="generateShareImage(_fcData.ucId)">画像保存</button>
     </div>`;
-  openModal('fanCardModal');
 }
 function shareToX(n,days,cnt,amt){
   const t=`📣 ${n} のファンカード\n\n推し歴: ${days}日\n推し活ログ: ${cnt}件\n推し活費用: ¥${amt.toLocaleString()}\n\n#CheerDesk #推し活`;
