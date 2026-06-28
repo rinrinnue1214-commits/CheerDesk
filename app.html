@@ -1410,7 +1410,7 @@ function switchCommentMode(mode){
   document.getElementById('commentSubmitBtn').onclick=isManual?addComment:addParsedComments;
 }
 
-// ── AIパース（Claude APIを使用） ──
+// ── AIパース（Cloudflare Worker経由） ──
 let parsedComments=[];
 async function parseCommentWithAI(){
   const text=document.getElementById('commentPasteText').value.trim();
@@ -1419,23 +1419,14 @@ async function parseCommentWithAI(){
   const btn=document.getElementById('parseBtn');
   btn.disabled=true;btn.textContent='解析中...';
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch(WORKER_URL+'/api/parse-comments',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:1000,
-        messages:[{role:'user',content:`以下は${platform}のコメント一覧テキストです。JSONのみで返してください（前置き・説明不要）。
-形式: [{"text":"コメント内容","type":"comment|superchat","amount":金額または0,"time":"時刻文字列"}]
-スパチャ・投げ銭・金額が含まれる行はtypeをsuperchatにしてamountに数値を入れてください。
-テキスト:
-${text}`}]
-      })
+      body:JSON.stringify({text,platform})
     });
+    if(!res.ok)throw new Error('Worker error: '+res.status);
     const data=await res.json();
-    const raw=data.content?.[0]?.text||'[]';
-    const clean=raw.replace(/```json|```/g,'').trim();
-    parsedComments=JSON.parse(clean);
+    parsedComments=data.comments||[];
     renderParseResult();
   }catch(e){
     toast('解析に失敗しました。手動入力をお試しください。');
