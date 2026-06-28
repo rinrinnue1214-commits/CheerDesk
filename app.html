@@ -936,6 +936,8 @@ async function onLogin(u){
   checkPaymentResult();
   // Service Worker初期化
   initServiceWorker();
+  // Chrome拡張にセッション情報を渡す
+  syncToExtension();
 }
 function showAuth(){CU=null;document.getElementById('authScreen').style.display='flex';document.getElementById('appScreen').style.display='none';}
 
@@ -965,7 +967,37 @@ async function submitAuth(){
   }
   btn.disabled=false;
 }
-async function signOut(){await sb.auth.signOut();showAuth();}
+// ── Chrome拡張連携 ──
+async function syncToExtension(){
+  if(!CU)return;
+  try{
+    // Supabaseセッションを取得
+    const{data:{session}}=await sb.auth.getSession();
+    if(!session)return;
+    // chrome.storage経由で拡張にセッション情報を渡す
+    // 拡張がインストールされている場合のみ動作
+    if(typeof chrome!=='undefined'&&chrome.storage){
+      await chrome.storage.local.set({
+        userId:CU.id,
+        accessToken:session.access_token,
+        email:CU.email,
+      });
+      console.log('CheerDesk拡張にセッションを同期しました');
+    }
+  }catch(e){
+    // 拡張未インストールの場合は無視
+  }
+}
+
+async function signOut(){
+  // 拡張のセッションもクリア
+  try{
+    if(typeof chrome!=='undefined'&&chrome.storage){
+      await chrome.storage.local.remove(['userId','accessToken','email']);
+    }
+  }catch(e){}
+  await sb.auth.signOut();showAuth();
+}
 
 function switchTab(t){
   CTab=t;
