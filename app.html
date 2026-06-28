@@ -181,9 +181,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email">
     <label>パスワード</label>
     <input type="password" id="auth-password" placeholder="8文字以上" autocomplete="current-password">
-    <div id="tosRow" style="display:none;flex-direction:column;gap:6px;margin-bottom:14px;">
-      <div style="display:flex;gap:8px;align-items:flex-start;">
-        <input type="checkbox" id="auth-tos" style="width:18px;height:18px;min-height:auto;margin:2px 0 0;flex-shrink:0;accent-color:var(--pink);cursor:pointer;">
+    <div id="tosRow" style="display:none;margin-bottom:14px;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span style="width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+          <input type="checkbox" id="auth-tos" style="all:revert;width:16px;height:16px;accent-color:var(--pink);cursor:pointer;margin:0;">
+        </span>
         <label for="auth-tos" style="margin:0;font-size:12px;color:var(--dim);cursor:pointer;">利用規約に同意します</label>
       </div>
     </div>
