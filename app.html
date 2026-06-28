@@ -272,6 +272,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <div class="chip" onclick="filterChannels('oshi',this)">⭐ 推し</div>
     <div class="chip" onclick="filterChannels('watch',this)">👁 ウォッチ</div>
     <div class="chip" onclick="filterChannels('know',this)">📌 知っている</div>
+    <select id="chSortSelect" onchange="renderChannelList()" style="width:auto;min-height:auto;padding:5px 10px;font-size:12px;margin:0;border-radius:20px;">
+      <option value="newest">追加順</option>
+      <option value="days">推し歴順</option>
+      <option value="name">名前順</option>
+    </select>
   </div>
   <div id="channelList"><div class="empty"><div class="empty-icon">⭐</div>まだ登録がありません<br><span style="font-size:11px;">右上の「＋ 追加」から登録しましょう</span></div></div>
 </div>
@@ -408,7 +413,9 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     </div>
     <label>表示名</label>
     <input type="text" id="displayNameInput" placeholder="ファン名・ニックネーム" style="margin-bottom:8px;">
-    <button class="primary" style="width:100%;" onclick="saveDisplayName()">表示名を保存</button>
+    <label>ユーザー名（プロフィールURL用）</label>
+    <input type="text" id="usernameInput" placeholder="例: oshi_fan_123（英数字・アンダースコアのみ）" style="margin-bottom:8px;">
+    <button class="primary" style="width:100%;" onclick="saveProfile()">プロフィールを保存</button>
   </div>
 
   <!-- プロフィールページ -->
@@ -516,6 +523,18 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <input type="text" id="newChPlatformId" placeholder="例: @channelname">
     <label>チャンネル名</label>
     <input type="text" id="newChName" placeholder="表示名">
+    <label>アイコン絵文字（任意）</label>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;" id="emojiPicker">
+      <span onclick="selectEmoji(this,'💜')" style="cursor:pointer;font-size:22px;padding:4px;border-radius:6px;">💜</span>
+      <span onclick="selectEmoji(this,'⭐')" style="cursor:pointer;font-size:22px;padding:4px;border-radius:6px;">⭐</span>
+      <span onclick="selectEmoji(this,'🌸')" style="cursor:pointer;font-size:22px;padding:4px;border-radius:6px;">🌸</span>
+      <span onclick="selectEmoji(this,'🎵')" style="cursor:pointer;font-size:22px;padding:4px;border-radius:6px;">🎵</span>
+      <span onclick="selectEmoji(this,'🔥')" style="cursor:pointer;font-size:22px;padding:4px;border-radius:6px;">🔥</span>
+      <span onclick="selectEmoji(this,'🎮')" style="cursor:pointer;font-size:22px;padding:4px;border-radius:6px;">🎮</span>
+      <span onclick="selectEmoji(this,'🌙')" style="cursor:pointer;font-size:22px;padding:4px;border-radius:6px;">🌙</span>
+      <span onclick="selectEmoji(this,'✨')" style="cursor:pointer;font-size:22px;padding:4px;border-radius:6px;">✨</span>
+    </div>
+    <input type="hidden" id="newChEmoji" value="">
     <label>ティア</label>
     <div class="tier-btns" style="margin-bottom:12px;">
       <button class="tier-btn oshi active" onclick="selectTier('oshi',this)">⭐ 推し</button>
@@ -866,6 +885,8 @@ async function onLogin(u){
     const di=document.getElementById('displayNameInput');
     if(dn)dn.textContent=ud2.display_name||u.email?.split('@')[0]||'未設定';
     if(di)di.value=ud2.display_name||'';
+    const ui=document.getElementById('usernameInput');
+    if(ui)ui.value=ud2.username||'';
     updatePlanUI(ud2);
     // PDF用チャンネルセレクトはloadChannels後に更新
   }
@@ -929,13 +950,17 @@ async function loadChannels(){
 
 function renderChannelList(){
   const el=document.getElementById('channelList');
-  const list=CFilt==='all'?AChans:AChans.filter(c=>c.tier===CFilt);
+  let list=CFilt==='all'?[...AChans]:[...AChans.filter(c=>c.tier===CFilt)];
+  const sort=document.getElementById('chSortSelect')?.value||'newest';
+  if(sort==='days') list.sort((a,b)=>(calcDays(b.followed_since)||0)-(calcDays(a.followed_since)||0));
+  else if(sort==='name') list.sort((a,b)=>a.channels.name.localeCompare(b.channels.name,'ja'));
   if(!list.length){el.innerHTML=`<div class="empty"><div class="empty-icon">⭐</div>${CFilt==='all'?'まだ登録がありません':'このティアにチャンネルがありません'}</div>`;return;}
   el.innerHTML=list.map(uc=>{
     const ch=uc.channels;
     const days=calcDays(uc.followed_since);
+    const icon=(uc.memo?.startsWith('emoji:')?uc.memo.slice(6):null)||pfIcon(ch.platform);
     return`<div class="ch-card" onclick="openChDetail('${uc.id}')">
-      <div class="ch-avatar-placeholder">${pfIcon(ch.platform)}</div>
+      <div class="ch-avatar-placeholder">${icon}</div>
       <div class="ch-info">
         <div class="ch-name">${esc(ch.name)}${ch.is_live?'<span class="ch-live">● LIVE</span>':''}</div>
         <div class="ch-meta">${ch.platform}${days!==null?' · 推し歴'+days+'日':''}</div>
@@ -975,6 +1000,7 @@ async function addChannel(){
   const pf=document.getElementById('newChPlatform').value;
   const tier=document.getElementById('newChTier').value;
   const since=document.getElementById('newChFollowedSince').value||null;
+  const emoji=document.getElementById('newChEmoji').value||null;
   if(!pid||!name){toast('チャンネルIDと名前を入力してください');return;}
   const oshiCnt=AChans.filter(c=>c.tier==='oshi').length;
   if(tier==='oshi'){
@@ -983,10 +1009,14 @@ async function addChannel(){
   }
   const{data:ch,error:ce}=await sb.from('channels').upsert({platform:pf,platform_channel_id:pid,name},{onConflict:'platform,platform_channel_id'}).select().single();
   if(ce){toast('追加に失敗: '+ce.message);return;}
-  const{error}=await sb.from('user_channels').upsert({user_id:CU.id,channel_id:ch.id,tier,notify_live:true,notify_video:tier!=='know',followed_since:since},{onConflict:'user_id,channel_id'});
+  const{error}=await sb.from('user_channels').upsert({user_id:CU.id,channel_id:ch.id,tier,notify_live:true,notify_video:tier!=='know',followed_since:since,memo:emoji?`emoji:${emoji}`:null},{onConflict:'user_id,channel_id'});
   if(error){toast('追加に失敗: '+error.message);return;}
   closeModal('addChannelModal');toast('✓ チャンネルを追加しました');
-  document.getElementById('newChPlatformId').value='';document.getElementById('newChName').value='';document.getElementById('newChFollowedSince').value='';
+  document.getElementById('newChPlatformId').value='';
+  document.getElementById('newChName').value='';
+  document.getElementById('newChFollowedSince').value='';
+  document.getElementById('newChEmoji').value='';
+  document.querySelectorAll('#emojiPicker span').forEach(s=>s.style.background='');
   await loadChannels();
 }
 
@@ -1125,7 +1155,15 @@ function renderSchedList(data,title){
   const el=document.getElementById('scheduleList');const tEl=document.getElementById('scheduleListTitle');
   if(tEl)tEl.textContent=title;if(!el)return;
   if(!data.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📅</div>予定がありません</div>`;return;}
-  el.innerHTML=data.map(s=>`<div class="sched-item"><div class="sched-dot ${s.status==='live'?'live':'upcoming'}"></div><div class="sched-main"><div class="sched-title">${esc(s.title||stTypeLbl(s.schedule_type))}</div><div class="sched-meta">${s.channels?.name||''} · ${fmtT(s.starts_at)}</div></div><span class="tag ${s.status==='live'?'oshi':'watch'}">${stLbl(s.status)}</span></div>`).join('');
+  el.innerHTML=data.map(s=>`<div class="sched-item">
+    <div class="sched-dot ${s.status==='live'?'live':'upcoming'}"></div>
+    <div class="sched-main">
+      <div class="sched-title">${esc(s.title||stTypeLbl(s.schedule_type))}</div>
+      <div class="sched-meta">${s.channels?.name||''} · ${fmtT(s.starts_at)}</div>
+    </div>
+    <span class="tag ${s.status==='live'?'oshi':'watch'}">${stLbl(s.status)}</span>
+    ${s.source==='manual'?`<button onclick="deleteSchedule('${s.id}')" style="background:none;border:none;color:var(--dim);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;" title="削除">×</button>`:''}
+  </div>`).join('');
 }
 function openAddScheduleModal(){document.getElementById('schedStartsAt').value=new Date().toISOString().slice(0,16);openModal('addScheduleModal');}
 async function addSchedule(){
@@ -1150,7 +1188,15 @@ async function loadLogs(){
   loadYearGraph();
   const el=document.getElementById('logList');if(!el)return;
   if(!data?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📝</div>まだログがありません</div>`;return;}
-  el.innerHTML=data.map(l=>`<div class="log-item"><div class="log-type-icon ${l.log_type}">${liIcon(l.log_type)}</div><div class="log-info"><div class="log-title">${esc(l.title||liLbl(l.log_type))}</div><div class="log-meta">${l.channels?.name||''} · ${fmtD(l.logged_at)}</div></div>${l.amount?`<div class="log-amount">¥${l.amount.toLocaleString()}</div>`:''}</div>`).join('');
+  el.innerHTML=data.map(l=>`<div class="log-item">
+    <div class="log-type-icon ${l.log_type}">${liIcon(l.log_type)}</div>
+    <div class="log-info">
+      <div class="log-title">${esc(l.title||liLbl(l.log_type))}</div>
+      <div class="log-meta">${l.channels?.name||''} · ${fmtD(l.logged_at)}</div>
+    </div>
+    ${l.amount?`<div class="log-amount">¥${l.amount.toLocaleString()}</div>`:''}
+    <button onclick="deleteLog('${l.id}')" style="background:none;border:none;color:var(--dim);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;" title="削除">×</button>
+  </div>`).join('');
 }
 function openAddLogModal(){
   if(CPlan==='free'){
@@ -1184,7 +1230,16 @@ async function loadComments(){
   document.getElementById('commentSuperTotal').textContent='¥'+st.toLocaleString();
   const el=document.getElementById('commentList');if(!el)return;
   if(!data?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">💬</div>コメント履歴がありません</div>`;return;}
-  el.innerHTML=data.map(c=>`<div class="comment-card ${c.comment_type==='superchat'?'superchat':''} ${c.is_first_comment?'first':''}"><div class="cc-video">${esc(c.channels?.name||'')}${c.video_title?' · '+esc(c.video_title):''}</div><div class="cc-text">${esc(c.comment_text||'(コメントなし)')}</div><div class="cc-meta">${c.is_first_comment?'<span style="color:var(--pink);font-weight:600;">🎉 初コメント</span>':''}${c.comment_type==='superchat'?`<span style="color:var(--gold);">💰 ¥${(c.amount||0).toLocaleString()}</span>`:''}<span>${fmtDT(c.commented_at)}</span></div></div>`).join('');
+  el.innerHTML=data.map(c=>`<div class="comment-card ${c.comment_type==='superchat'?'superchat':''} ${c.is_first_comment?'first':''}">
+    <div class="cc-video">${esc(c.channels?.name||'')}${c.video_title?' · '+esc(c.video_title):''}</div>
+    <div class="cc-text">${esc(c.comment_text||'(コメントなし)')}</div>
+    <div class="cc-meta">
+      ${c.is_first_comment?'<span style="color:var(--pink);font-weight:600;">🎉 初コメント</span>':''}
+      ${c.comment_type==='superchat'?`<span style="color:var(--gold);">💰 ¥${(c.amount||0).toLocaleString()}</span>`:''}
+      <span>${fmtDT(c.commented_at)}</span>
+      <button onclick="deleteComment('${c.id}')" style="background:none;border:none;color:var(--dim);font-size:14px;cursor:pointer;padding:2px 4px;line-height:1;margin-left:auto;">×</button>
+    </div>
+  </div>`).join('');
 }
 function openAddCommentModal(){
   if(CPlan==='free'){toast('コメント履歴はプレミアムプランの機能です');return;}
@@ -1223,8 +1278,11 @@ async function loadStampCounts(){
 async function sendStamp(emoji){
   const cid=document.getElementById('cheerTargetChannel').value;if(!cid){toast('推しを選んでください');return;}
   if(CPlan==='free'){
-    const{count}=await sb.from('cheer_messages').select('*',{count:'exact',head:true}).eq('user_id',CU.id).gte('sent_at',new Date(Date.now()-2592000000).toISOString());
-    if((count||0)>=3){toast('フリープランのスタンプ送信は月3回まで');return;}
+    const{key,count}=getStampCountThisMonth();
+    if(count>=3){toast('フリープランのスタンプ送信は月3回まで（残り0回）');return;}
+    incStampCount();
+    const remaining=2-count;
+    if(remaining>=0) setTimeout(()=>toast(`残り${remaining}回`),500);
   }
   const{error}=await sb.from('cheer_messages').insert({user_id:CU.id,channel_id:cid,message_type:'stamp',stamp_emoji:emoji,is_anonymous:false});
   if(error){toast('送信に失敗しました');return;}
@@ -1541,6 +1599,78 @@ function stLbl(s){return{upcoming:'予定',live:'LIVE中',ended:'終了'}[s]||s;
 function fmtD(d){if(!d)return'';const dt=new Date(d);return`${dt.getFullYear()}/${dt.getMonth()+1}/${dt.getDate()}`;}
 function fmtT(d){if(!d)return'';const dt=new Date(d);return`${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}`;}
 function fmtDT(d){if(!d)return'';const dt=new Date(d);return`${dt.getFullYear()}/${dt.getMonth()+1}/${dt.getDate()} ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}`;}
+
+// ── 削除関数 ──
+async function deleteLog(id){
+  if(!confirm('このログを削除しますか？'))return;
+  await sb.from('cheer_logs').delete().eq('id',id).eq('user_id',CU.id);
+  toast('✓ 削除しました');loadLogs();loadHomeData();
+}
+async function deleteComment(id){
+  if(!confirm('このコメント記録を削除しますか？'))return;
+  await sb.from('comment_logs').delete().eq('id',id).eq('user_id',CU.id);
+  toast('✓ 削除しました');loadComments();
+}
+async function deleteSchedule(id){
+  if(!confirm('このスケジュールを削除しますか？'))return;
+  await sb.from('channel_schedules').delete().eq('id',id);
+  toast('✓ 削除しました');loadSchedule();
+}
+
+// ── 絵文字アイコン選択 ──
+function selectEmoji(el,emoji){
+  document.querySelectorAll('#emojiPicker span').forEach(s=>s.style.background='');
+  el.style.background='rgba(224,98,158,.2)';
+  document.getElementById('newChEmoji').value=emoji;
+}
+
+// ── チャンネル追加にemoji対応 ──
+// addChannel関数内でemojiをuser_channelsのmetaに保存（memo列を活用）
+
+// ── プロフィール保存（表示名＋username）──
+async function saveProfile(){
+  const name=document.getElementById('displayNameInput').value.trim();
+  const uname=document.getElementById('usernameInput').value.trim();
+  if(!name){toast('表示名を入力してください');return;}
+  if(uname&&!/^[a-zA-Z0-9_]{3,20}$/.test(uname)){toast('ユーザー名は英数字・アンダースコア3〜20文字で入力してください');return;}
+  const{error}=await sb.from('users').update({display_name:name,username:uname||null}).eq('id',CU.id);
+  if(error){
+    // usernameカラムがまだない場合は表示名のみ保存
+    await sb.from('users').update({display_name:name}).eq('id',CU.id);
+  }
+  document.getElementById('settingsDisplayName').textContent=name;
+  const pUrl=document.getElementById('profileUrlBox');
+  if(pUrl&&uname)pUrl.textContent=location.origin+location.pathname+'?profile='+(uname||CU.id.slice(0,8));
+  toast('✓ プロフィールを保存しました');
+}
+
+// ── スタンプ月3回制限（localStorageで軽量化）──
+function getStampCountThisMonth(){
+  const key='cd_stamp_'+CU?.id+'_'+new Date().getFullYear()+'_'+(new Date().getMonth()+1);
+  return{key,count:parseInt(localStorage.getItem(key)||'0')};
+}
+function incStampCount(){
+  const{key,count}=getStampCountThisMonth();
+  localStorage.setItem(key,count+1);
+}
+
+// ── 通知許可状態リアルタイム反映 ──
+async function requestNotificationPermission(){
+  if(!('Notification'in window)){toast('このブラウザは通知に対応していません');return;}
+  const p=await Notification.requestPermission();
+  const nb=document.getElementById('notifBtn');
+  if(p==='granted'){
+    toast('✓ 通知を有効にしました');
+    if(nb)nb.textContent='✓ プッシュ通知 有効';
+    if(nb)nb.style.color='var(--calm)';
+  } else {
+    toast('通知が許可されませんでした');
+    if(nb)nb.textContent='プッシュ通知を有効にする（ブラウザで許可が必要）';
+  }
+}
+
+// ── 表示名保存（後方互換） ──
+async function saveDisplayName(){saveProfile();}
 
 // ── 表示名保存 ──
 async function saveDisplayName(){
