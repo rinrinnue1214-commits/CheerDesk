@@ -376,9 +376,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <div style="font-size:12px;color:var(--dim);line-height:1.65;">
       スタンプやメッセージは<b style="color:var(--text);">あなただけが見る記録</b>です。配信者には届きません。「今日も推しを応援した」という気持ちを日記のように残せます。
     </div>
-    <div style="font-size:11px;color:var(--dim);margin-top:6px;padding-top:6px;border-top:1px solid var(--border);">
-      💡 将来的にはOpsDesk（活動者向け）と連携して、応援が配信者に届く機能を実装予定です。
-    </div>
   </div>
 
   <div class="card">
@@ -403,13 +400,13 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <textarea id="cheerMessage" placeholder="今日の推し活の感想・気持ちを書いてみましょう...&#10;（これはあなただけが見る記録です）" style="min-height:100px;margin-bottom:8px;"></textarea>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
       <input type="checkbox" id="cheerAnon" style="width:auto;min-height:auto;margin:0;accent-color:var(--pink);">
-      <label for="cheerAnon" style="margin:0;font-size:12px;">匿名として記録する（将来の連携時に非公開にする）</label>
+      <label for="cheerAnon" style="margin:0;font-size:12px;">匿名として記録する</label>
     </div>
     <button class="primary full" onclick="sendCheerMessage()">記録する 📓</button>
   </div>
   <div class="card">
     <div class="card-hd">応援履歴</div>
-    <div id="cheerHistory"><div class="empty"><div class="empty-icon">📣</div>まだ記録していません</div></div>
+    <div id="cheerHistory"><div class="empty"><div class="empty-icon">📓</div>まだ記録していません</div></div>
   </div>
 </div>
 
@@ -1868,7 +1865,9 @@ async function deleteComment(id){
 async function deleteSchedule(id){
   if(!confirm('このスケジュールを削除しますか？'))return;
   await sb.from('channel_schedules').delete().eq('id',id);
-  toast('✓ 削除しました');loadSchedule();
+  toast('✓ 削除しました');
+  renderCal();
+  loadSchedule();
 }
 
 // ── YouTube全チャンネルスケジュール一括更新 ──
