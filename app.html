@@ -226,7 +226,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <button data-tab="schedule" onclick="switchTab('schedule')"><span class="ni">📅</span>スケジュール</button>
     <button data-tab="logs" onclick="switchTab('logs')"><span class="ni">📝</span>推し活ログ</button>
     <button data-tab="comments" onclick="switchTab('comments')"><span class="ni">💬</span>コメント</button>
-    <button data-tab="cheer" onclick="switchTab('cheer')"><span class="ni">📣</span>応援</button>
+    <button data-tab="cheer" onclick="switchTab('cheer')"><span class="ni">📓</span>応援記録</button>
     <button data-tab="settings" onclick="switchTab('settings')"><span class="ni">⚙️</span>設定</button>
   </nav>
 </div>
@@ -243,7 +243,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
       <div class="stat"><div class="num" style="color:var(--pink);">-</div><div class="lbl">ログ件数</div></div>
       <div class="stat"><div class="num" style="color:var(--gold);">-</div><div class="lbl">推し活費用</div></div>
       <div class="stat"><div class="num" style="color:var(--calm);">-</div><div class="lbl">コメント数</div></div>
-      <div class="stat"><div class="num" style="color:var(--purple);">-</div><div class="lbl">応援送信</div></div>
+      <div class="stat"><div class="num" style="color:var(--purple);">-</div><div class="lbl">応援記録</div></div>
     </div>
   </div>
   <div class="card">
@@ -368,18 +368,21 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
 
 <!-- 応援 -->
 <div class="panel-view" id="panel-cheer">
-  <div class="page-header"><div class="page-title">応援</div></div>
+  <div class="page-header"><div class="page-title">応援記録</div></div>
 
-  <!-- 応援機能の説明 -->
-  <div style="background:rgba(224,98,158,.07);border:1px solid rgba(224,98,158,.2);border-radius:10px;padding:12px 14px;margin-bottom:12px;">
-    <div style="font-size:13px;font-weight:600;color:var(--pink);margin-bottom:4px;">📣 応援機能について</div>
+  <!-- 機能説明 -->
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+    <div style="font-size:13px;font-weight:600;margin-bottom:4px;">📓 推し活日記として記録しよう</div>
     <div style="font-size:12px;color:var(--dim);line-height:1.65;">
-      ここに記録した応援スタンプ・レターは<b style="color:var(--text);">あなた自身の推し活記録</b>として保存されます。配信者に直接届くものではありません。「推しを応援した気持ち」を日記のように残すための機能です。
+      スタンプやメッセージは<b style="color:var(--text);">あなただけが見る記録</b>です。配信者には届きません。「今日も推しを応援した」という気持ちを日記のように残せます。
+    </div>
+    <div style="font-size:11px;color:var(--dim);margin-top:6px;padding-top:6px;border-top:1px solid var(--border);">
+      💡 将来的にはOpsDesk（活動者向け）と連携して、応援が配信者に届く機能を実装予定です。
     </div>
   </div>
 
   <div class="card">
-    <div class="card-hd">応援する推しを選ぶ</div>
+    <div class="card-hd">記録する推しを選ぶ</div>
     <select id="cheerTargetChannel" onchange="loadStampCounts()" style="margin-bottom:0;"></select>
   </div>
   <div class="card">
@@ -396,13 +399,13 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     </div>
   </div>
   <div class="card">
-    <div class="card-hd">応援レター <span style="font-size:11px;color:var(--dim);">自分だけの記録</span></div>
-    <textarea id="cheerMessage" placeholder="推しへの気持ちを書いてみましょう...&#10;（これはあなたの記録として保存されます）" style="min-height:100px;margin-bottom:8px;"></textarea>
+    <div class="card-hd">推し活メモ <span style="font-size:11px;color:var(--dim);">自分だけの記録</span></div>
+    <textarea id="cheerMessage" placeholder="今日の推し活の感想・気持ちを書いてみましょう...&#10;（これはあなただけが見る記録です）" style="min-height:100px;margin-bottom:8px;"></textarea>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
       <input type="checkbox" id="cheerAnon" style="width:auto;min-height:auto;margin:0;accent-color:var(--pink);">
-      <label for="cheerAnon" style="margin:0;font-size:12px;">匿名として記録する</label>
+      <label for="cheerAnon" style="margin:0;font-size:12px;">匿名として記録する（将来の連携時に非公開にする）</label>
     </div>
-    <button class="primary full" onclick="sendCheerMessage()">記録する 💌</button>
+    <button class="primary full" onclick="sendCheerMessage()">記録する 📓</button>
   </div>
   <div class="card">
     <div class="card-hd">応援履歴</div>
@@ -949,7 +952,7 @@ async function onLogin(u){
   document.getElementById('appScreen').style.display='block';
   document.getElementById('settingsEmail').textContent=u.email;
   const {data:ud}=await sb.from('users').select('*').eq('id',u.id).single();
-  if(ud){CPlan=ud.plan||'free';updatePlanUI(ud);updateUpgradeUI(ud);}
+  if(ud){CPlan=effectivePlan(ud.plan||'free');updatePlanUI(ud);updateUpgradeUI(ud);}
   await loadChannels();
   loadHomeData();renderCal();loadSchedule();loadLogs();loadComments();loadCheerHistory();
   loadCheerScore();loadYearGraph();
@@ -1459,10 +1462,33 @@ async function sendCheerMessage(){
   toast('💌 応援レターを送りました！');document.getElementById('cheerMessage').value='';loadCheerHistory();
 }
 
+// ── ベータ期間設定 ──
+const BETA_END=new Date('2026-07-31T23:59:59+09:00');
+const IS_BETA=new Date()<BETA_END;
+const BETA_PLAN='standard'; // ベータ中は全員スタンダード相当
+
+// ── 実効プランを取得（ベータ中は底上げ）──
+function effectivePlan(plan){
+  if(!IS_BETA)return plan||'free';
+  const order=['free','standard','premium'];
+  const a=order.indexOf(plan||'free');
+  const b=order.indexOf(BETA_PLAN);
+  return order[Math.max(a,b)];
+}
+
 function updatePlanUI(ud){
   const pn={free:'フリー',standard:'スタンダード',premium:'プレミアム'};
   const pi=document.getElementById('planInfo');const es=document.getElementById('extensionStatus');
-  if(pi)pi.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;"><span style="font-size:15px;font-weight:600;">${pn[ud.plan||'free']}</span><span style="font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--pink);color:var(--pink);font-family:'IBM Plex Mono',monospace;">${ud.billing_cycle==='annual'?'年払い':'月払い'}</span>${ud.extension_verified?'<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(69,214,176,.12);color:var(--calm);border:1px solid rgba(69,214,176,.3);">拡張割引 適用中</span>':''}</div>`;
+  const basePlan=ud.plan||'free';
+  const effPlan=effectivePlan(basePlan);
+  const betaBadge=IS_BETA?`<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(224,98,158,.15);color:var(--pink);border:1px solid rgba(224,98,158,.3);font-family:'IBM Plex Mono',monospace;">BETA FREE</span>`:'';
+  if(pi)pi.innerHTML=`
+    ${IS_BETA?`<div style="background:rgba(224,98,158,.07);border:1px solid rgba(224,98,158,.2);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--pink);">🎉 オープンベータ期間中（〜7月末）は<b>全機能を無料</b>でお試しいただけます！</div>`:''}
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span style="font-size:15px;font-weight:600;">${pn[basePlan]}</span>
+      ${betaBadge}
+      ${ud.extension_verified?'<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(69,214,176,.12);color:var(--calm);border:1px solid rgba(69,214,176,.3);">拡張割引 適用中</span>':''}
+    </div>`;
   if(es)es.innerHTML=ud.extension_verified?`<span style="color:var(--calm);">✓</span> Chrome拡張がインストール済みです。拡張割引が適用されています。<br><button class="link-btn" style="margin-top:6px;" onclick="revokeExt()">割引を解除する</button>`:`Chrome拡張をインストールすると月額が割引されます。`;
 }
 // ── コメントモード切替 ──
@@ -1766,7 +1792,7 @@ async function checkPaymentResult(){
     history.replaceState({},'',location.pathname);
     // プラン情報を再取得
     const{data:ud}=await sb.from('users').select('*').eq('id',CU.id).single();
-    if(ud){CPlan=ud.plan||'free';updatePlanUI(ud);updateUpgradeUI(ud);}
+    if(ud){CPlan=effectivePlan(ud.plan||'free');updatePlanUI(ud);updateUpgradeUI(ud);}
   } else if(params.get('payment')==='cancel'){
     toast('決済をキャンセルしました');
     history.replaceState({},'',location.pathname);
@@ -2431,7 +2457,17 @@ function getAnniversary(uc){
 // ── ファンカード生成 ──
 let _fcData={};
 async function openFanCard(ucId){
-  const uc=AChans.find(c=>c.id===ucId);if(!uc)return;
+  // チャンネル詳細モーダルを先に閉じる
+  closeModal('channelDetailModal');
+  await new Promise(r=>setTimeout(r,150)); // アニメーション待機
+
+  const uc=AChans.find(c=>c.id===ucId);
+  if(!uc){
+    // idで見つからない場合はchannel_idで検索
+    const byChId=AChans.find(c=>c.channel_id===ucId);
+    if(!byChId){toast('チャンネルが見つかりません');return;}
+    return openFanCard(byChId.id);
+  }
   const ch=uc.channels;const days=calcDays(uc.followed_since);const now=new Date();
   document.getElementById('fanCardContent').innerHTML='<div style="text-align:center;padding:20px;color:var(--dim);">読込中...</div>';
   openModal('fanCardModal');
@@ -2443,7 +2479,6 @@ async function openFanCard(ucId){
   const totalAmt=(logs||[]).reduce((s,l)=>s+(l.amount||0),0);
   const{data:ud}=await sb.from('users').select('display_name').eq('id',CU.id).single();
   const fanName=ud?.display_name||CU.email?.split('@')[0]||'ファン';
-  // グローバル変数に保存（onclick内でJSON埋め込みを避けるため）
   _fcData={chName:ch.name,days:days??0,logCnt:(logs||[]).length,amt:totalAmt,cheerCnt:(cheers||[]).length,ucId};
   document.getElementById('fanCardContent').innerHTML=`
     <div style="background:linear-gradient(135deg,#1A1C26 0%,#20152A 100%);border:1px solid var(--pink);border-radius:16px;padding:24px;text-align:center;">
@@ -2464,7 +2499,7 @@ async function openFanCard(ucId){
         </div>
         <div style="background:rgba(255,255,255,.05);border-radius:10px;padding:10px;">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--purple);">${(cheers||[]).length}</div>
-          <div style="font-size:10px;color:var(--dim);margin-top:2px;">応援送信</div>
+          <div style="font-size:10px;color:var(--dim);margin-top:2px;">応援回数</div>
         </div>
       </div>
       <div style="font-size:11px;color:var(--dim);border-top:1px solid var(--border);padding-top:10px;">${esc(fanName)} · ${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}</div>
