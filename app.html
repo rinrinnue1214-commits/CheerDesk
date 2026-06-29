@@ -1932,7 +1932,7 @@ async function fetchSchedTitle(){
   btn.disabled=true;btn.textContent='取得中...';
   try{
     // YouTube動画IDを抽出してタイトルを取得
-    const ytMatch=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    const ytMatch=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/live\/)([A-Za-z0-9_-]{11})/);
     const twMatch=url.match(/twitch\.tv\/([^/?]+)/);
     const nicoMatch=url.match(/nicovideo\.jp\/watch\/((?:sm|nm|so|lv)\d+)/);
 
