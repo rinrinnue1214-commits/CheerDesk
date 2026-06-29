@@ -1943,7 +1943,6 @@ async function fetchSchedTitle(){
         body:JSON.stringify({platform:'youtube',id:ytMatch[1]})
       });
       const data=await res.json();
-      console.log('[CheerDesk] YouTube API response:', JSON.stringify(data));
       if(data.title){
         document.getElementById('schedTitle').value=data.title;
         // 配信・アーカイブ・動画を自動判定
@@ -1953,13 +1952,11 @@ async function fetchSchedTitle(){
         // 開始時刻をJSTで設定（actualStart優先 → scheduledStart）
         const startTime=data.actualStart||data.scheduledStart;
         if(startTime){
-          // UTC→JSTに変換してdatetime-localに設定
           const dt=new Date(new Date(startTime).getTime()+9*60*60*1000);
           document.getElementById('schedStartsAt').value=dt.toISOString().slice(0,16);
         }
-        const typeLabel=data.isArchive?'アーカイブ':data.isLive?`配信(${data.liveBroadcast})`:'動画';
-        const timeMsg=startTime?`（開始時刻自動入力）`:data.hasLiveDetails===false?'（配信情報なし）':'（時刻取得できず）';
-        toast(`✓ ${typeLabel}情報を取得しました${timeMsg}`);
+        const typeLabel=data.isArchive?'アーカイブ':data.isLive?'配信':'動画';
+        toast(`✓ ${typeLabel}情報を取得しました${startTime?'（開始時刻も自動入力）':'（開始時刻は手動入力してください）'}`);
       } else toast('タイトルを取得できませんでした');
     } else if(twMatch){
       document.getElementById('schedTitle').value=`${twMatch[1]} の配信`;
