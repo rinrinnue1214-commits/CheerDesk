@@ -1327,14 +1327,21 @@ function renderSchedList(data,title){
     ${s.source==='manual'?`<button onclick="deleteSchedule('${s.id}')" style="background:none;border:none;color:var(--dim);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;" title="削除">×</button>`:''}
   </div>`).join('');
 }
-function openAddScheduleModal(){document.getElementById('schedStartsAt').value=new Date().toISOString().slice(0,16);openModal('addScheduleModal');}
+function openAddScheduleModal(){
+  // JSTの現在時刻をdatetime-localに設定
+  const nowJST=new Date(Date.now()+9*60*60*1000);
+  document.getElementById('schedStartsAt').value=nowJST.toISOString().slice(0,16);
+  openModal('addScheduleModal');
+}
 async function addSchedule(){
   const cid=document.getElementById('schedChannel').value;const title=document.getElementById('schedTitle').value.trim();
   const type=document.getElementById('schedType').value;const sa=document.getElementById('schedStartsAt').value;
   if(!cid||!sa){toast('チャンネルと開始日時を入力してください');return;}
-  const{error}=await sb.from('channel_schedules').insert({channel_id:cid,title:title||null,schedule_type:type,starts_at:new Date(sa).toISOString(),source:'manual',status:'upcoming'});
+  // datetime-localの値はJSTなので +09:00 を付けてUTCズレを防ぐ
+  const startsAt=sa?sa+':00+09:00':null;
+  const{error}=await sb.from('channel_schedules').insert({channel_id:cid,title:title||null,schedule_type:type,starts_at:startsAt,source:'manual',status:'upcoming'});
   if(error){toast('追加に失敗: '+error.message);return;}
-  closeModal('addScheduleModal');toast('✓ 追加しました');loadSchedule();
+  closeModal('addScheduleModal');toast('✓ 追加しました');renderCal();loadSchedule();
 }
 
 async function loadLogs(){
