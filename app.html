@@ -534,6 +534,20 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     </div>
   </div>
 
+  <!-- フィードバック -->
+  <div class="card">
+    <div class="card-hd">💬 フィードバックを送る</div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:10px;">バグ報告・機能要望・改善提案をお聞かせください。開発の参考にします。</div>
+    <select id="feedbackCategory" style="margin-bottom:8px;">
+      <option value="バグ報告">🐛 バグ報告</option>
+      <option value="機能要望">✨ 機能要望</option>
+      <option value="改善提案">💡 改善提案</option>
+      <option value="その他">📝 その他</option>
+    </select>
+    <textarea id="feedbackContent" placeholder="気になった点や要望を自由に書いてください..." style="min-height:80px;margin-bottom:8px;"></textarea>
+    <button class="primary" style="width:100%;" onclick="sendFeedback()">送信する</button>
+  </div>
+
   <!-- 通知 -->
   <div class="card">
     <div class="card-hd">通知設定</div>
@@ -1012,6 +1026,39 @@ async function submitAuth(){
   }
   btn.disabled=false;
 }
+// ── フィードバック送信 ──
+async function sendFeedback(){
+  const content=document.getElementById('feedbackContent').value.trim();
+  const category=document.getElementById('feedbackCategory').value;
+  if(!content){toast('内容を入力してください');return;}
+  if(content.length<5){toast('もう少し詳しく教えてください');return;}
+  const btn=event.target;btn.disabled=true;btn.textContent='送信中...';
+  try{
+    const{data:ud}=await sb.from('users').select('plan').eq('id',CU.id).single();
+    const res=await fetch(WORKER_URL+'/api/feedback',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        category,
+        content,
+        userId:CU.id,
+        email:CU.email,
+        plan:ud?.plan||'free',
+      })
+    });
+    const data=await res.json();
+    if(data.success){
+      toast('✓ フィードバックを送りました！ありがとうございます。');
+      document.getElementById('feedbackContent').value='';
+    } else {
+      toast('送信に失敗しました。後ほど再試行してください。');
+    }
+  }catch(e){
+    toast('送信に失敗しました');
+  }
+  btn.disabled=false;btn.textContent='送信する';
+}
+
 // ── Chrome拡張連携 ──
 async function syncToExtension(){
   if(!CU)return;
