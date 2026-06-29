@@ -285,7 +285,10 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
 <div class="panel-view" id="panel-schedule">
   <div class="page-header">
     <div class="page-title">スケジュール</div>
-    <button class="ghost sm" onclick="openAddScheduleModal()">＋ 手動追加</button>
+    <div style="display:flex;gap:6px;">
+      <button class="ghost sm" onclick="syncYouTubeSchedules()" title="YouTubeのスケジュールを更新">🔄 更新</button>
+      <button class="ghost sm" onclick="openAddScheduleModal()">＋ 手動追加</button>
+    </div>
   </div>
   <div class="card">
     <div class="cal-head">
@@ -689,6 +692,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <div class="modal-title">スケジュールを追加</div>
     <label>チャンネル</label>
     <select id="schedChannel"></select>
+    <label>配信・動画URL（任意）</label>
+    <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <input type="text" id="schedUrl" placeholder="https://youtube.com/watch?v=..." style="flex:1;margin:0;" oninput="onSchedUrlInput(this.value)">
+      <button class="ghost sm" onclick="fetchSchedTitle()" id="fetchTitleBtn" style="white-space:nowrap;flex-shrink:0;padding:10px 12px;">取得</button>
+    </div>
     <label>タイトル</label>
     <input type="text" id="schedTitle" placeholder="配信・動画タイトル">
     <label>種類</label>
@@ -1102,6 +1110,21 @@ async function addChannel(){
   const ft=document.getElementById('newChFollowedSinceText');if(ft)ft.value='';
   document.getElementById('newChEmoji').value='';
   document.querySelectorAll('#emojiPicker span').forEach(s=>s.style.background='');
+  await loadChannels();
+  // YouTubeチャンネルの場合はPubSub購読とスケジュール自動取得
+  if(pf==='youtube'&&pid){
+    const youtubeChannelId=pid.startsWith('@')?pid:pid.startsWith('UC')?pid:null;
+    if(youtubeChannelId){
+      // チャンネルDBのIDを取得
+      const{data:newUc}=await sb.from('user_channels').select('channel_id,channels(platform_channel_id)').eq('user_id',CU.id).eq('tier',tier).order('created_at',{ascending:false}).limit(1).single();
+      if(newUc){
+        // PubSub購読登録
+        fetch(WORKER_URL+'/api/youtube/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({youtubeChannelId:newUc.channels?.platform_channel_id||pid})}).catch(()=>{});
+        // スケジュール自動取得
+        fetchYouTubeSchedules(newUc.channel_id, pid);
+      }
+    }
+  }
   await loadChannels();
 }
 
@@ -1765,6 +1788,113 @@ async function deleteSchedule(id){
   if(!confirm('このスケジュールを削除しますか？'))return;
   await sb.from('channel_schedules').delete().eq('id',id);
   toast('✓ 削除しました');loadSchedule();
+}
+
+// ── YouTube全チャンネルスケジュール一括更新 ──
+async function syncYouTubeSchedules(){
+  const ytChannels=AChans.filter(c=>c.channels?.platform==='youtube');
+  if(!ytChannels.length){toast('YouTubeのチャンネルが登録されていません');return;}
+  toast('🔄 YouTubeスケジュールを取得中...');
+  let total=0;
+  for(const uc of ytChannels){
+    const pid=uc.channels?.platform_channel_id;
+    if(!pid)continue;
+    try{
+      const res=await fetch(WORKER_URL+'/api/youtube/schedules',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({channelId:pid,channelDbId:uc.channel_id})
+      });
+      const data=await res.json();
+      total+=data.found||0;
+    }catch(e){console.warn('Schedule sync error:',e);}
+  }
+  toast(`✓ ${total}件の配信予定を更新しました`);
+  loadSchedule();
+}
+
+// ── YouTube スケジュール自動取得 ──
+async function fetchYouTubeSchedules(channelDbId, platformChannelId){
+  if(!channelDbId||!platformChannelId)return;
+  try{
+    const res=await fetch(WORKER_URL+'/api/youtube/schedules',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({channelId:platformChannelId,channelDbId})
+    });
+    const data=await res.json();
+    if(data.found>0){
+      toast(`✓ ${data.found}件の配信予定を取得しました`);
+      loadSchedule();
+    }
+  }catch(e){
+    console.warn('YouTube schedule fetch error:',e);
+  }
+}
+
+// ── スケジュールURLからタイトル自動取得 ──
+function onSchedUrlInput(val){
+  const btn=document.getElementById('fetchTitleBtn');
+  if(btn)btn.style.color=val?'var(--pink)':'';
+}
+
+async function fetchSchedTitle(){
+  const url=document.getElementById('schedUrl').value.trim();
+  if(!url){toast('URLを入力してください');return;}
+  const btn=document.getElementById('fetchTitleBtn');
+  btn.disabled=true;btn.textContent='取得中...';
+  try{
+    // YouTube動画IDを抽出してタイトルを取得
+    const ytMatch=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    const twMatch=url.match(/twitch\.tv\/([^/?]+)/);
+    const nicoMatch=url.match(/nicovideo\.jp\/watch\/((?:sm|nm|so|lv)\d+)/);
+
+    if(ytMatch){
+      const res=await fetch(WORKER_URL+'/api/fetch-title',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({platform:'youtube',id:ytMatch[1]})
+      });
+      const data=await res.json();
+      if(data.title){
+        document.getElementById('schedTitle').value=data.title;
+        // 配信か動画かを自動判定
+        if(data.isLive)document.getElementById('schedType').value='live';
+        else document.getElementById('schedType').value='video';
+        if(data.scheduledStart){
+          const dt=new Date(data.scheduledStart);
+          document.getElementById('schedStartsAt').value=dt.toISOString().slice(0,16);
+        }
+        toast('✓ タイトルを取得しました');
+      } else toast('タイトルを取得できませんでした');
+    } else if(twMatch){
+      document.getElementById('schedTitle').value=`${twMatch[1]} の配信`;
+      document.getElementById('schedType').value='live';
+      toast('✓ Twitchの配信として設定しました');
+    } else if(nicoMatch){
+      const res=await fetch(WORKER_URL+'/api/fetch-title',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({platform:'niconico',id:nicoMatch[1]})
+      });
+      const data=await res.json();
+      if(data.title){document.getElementById('schedTitle').value=data.title;toast('✓ タイトルを取得しました');}
+      else toast('タイトルを取得できませんでした');
+    } else {
+      // 汎用タイトル取得（OGP）
+      const res=await fetch(WORKER_URL+'/api/fetch-title',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({platform:'other',url})
+      });
+      const data=await res.json();
+      if(data.title)document.getElementById('schedTitle').value=data.title;
+      toast(data.title?'✓ タイトルを取得しました':'URLからタイトルを取得できませんでした。手動で入力してください。');
+    }
+  }catch(e){
+    toast('取得に失敗しました。手動でタイトルを入力してください。');
+  }
+  btn.disabled=false;btn.textContent='取得';
 }
 
 // ── プラットフォームplaceholder更新 ──
