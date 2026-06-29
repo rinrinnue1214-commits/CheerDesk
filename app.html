@@ -368,12 +368,21 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
 <!-- 応援 -->
 <div class="panel-view" id="panel-cheer">
   <div class="page-header"><div class="page-title">応援</div></div>
+
+  <!-- 応援機能の説明 -->
+  <div style="background:rgba(224,98,158,.07);border:1px solid rgba(224,98,158,.2);border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+    <div style="font-size:13px;font-weight:600;color:var(--pink);margin-bottom:4px;">📣 応援機能について</div>
+    <div style="font-size:12px;color:var(--dim);line-height:1.65;">
+      ここに記録した応援スタンプ・レターは<b style="color:var(--text);">あなた自身の推し活記録</b>として保存されます。配信者に直接届くものではありません。「推しを応援した気持ち」を日記のように残すための機能です。
+    </div>
+  </div>
+
   <div class="card">
     <div class="card-hd">応援する推しを選ぶ</div>
     <select id="cheerTargetChannel" onchange="loadStampCounts()" style="margin-bottom:0;"></select>
   </div>
   <div class="card">
-    <div class="card-hd">応援スタンプ</div>
+    <div class="card-hd">応援スタンプ <span style="font-size:11px;color:var(--dim);">累計回数</span></div>
     <div class="stamp-grid">
       <div class="stamp-btn" onclick="sendStamp('🔥')"><span>🔥</span><span class="stamp-cnt" id="cnt-fire">-</span></div>
       <div class="stamp-btn" onclick="sendStamp('💜')"><span>💜</span><span class="stamp-cnt" id="cnt-heart">-</span></div>
@@ -386,17 +395,17 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     </div>
   </div>
   <div class="card">
-    <div class="card-hd">応援レター</div>
-    <textarea id="cheerMessage" placeholder="推しへのメッセージを書いてみましょう..." style="min-height:100px;margin-bottom:8px;"></textarea>
+    <div class="card-hd">応援レター <span style="font-size:11px;color:var(--dim);">自分だけの記録</span></div>
+    <textarea id="cheerMessage" placeholder="推しへの気持ちを書いてみましょう...&#10;（これはあなたの記録として保存されます）" style="min-height:100px;margin-bottom:8px;"></textarea>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
       <input type="checkbox" id="cheerAnon" style="width:auto;min-height:auto;margin:0;accent-color:var(--pink);">
-      <label for="cheerAnon" style="margin:0;font-size:12px;">匿名で送る</label>
+      <label for="cheerAnon" style="margin:0;font-size:12px;">匿名として記録する</label>
     </div>
-    <button class="primary full" onclick="sendCheerMessage()">送る 💌</button>
+    <button class="primary full" onclick="sendCheerMessage()">記録する 💌</button>
   </div>
   <div class="card">
-    <div class="card-hd">送信履歴</div>
-    <div id="cheerHistory"><div class="empty"><div class="empty-icon">📣</div>まだ送信していません</div></div>
+    <div class="card-hd">応援履歴</div>
+    <div id="cheerHistory"><div class="empty"><div class="empty-icon">📣</div>まだ記録していません</div></div>
   </div>
 </div>
 
@@ -634,7 +643,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <label>チャンネル</label>
     <select id="commentChannel"></select>
 
-    <!-- AIパースモード切替 -->
+    <!-- AIパース説明 -->
+    <div style="background:rgba(155,138,251,.07);border:1px solid rgba(155,138,251,.2);border-radius:8px;padding:10px 12px;margin-bottom:10px;">
+      <div style="font-size:12px;font-weight:600;color:var(--purple);margin-bottom:3px;">🤖 コメントを貼るだけで自動で履歴になります</div>
+      <div style="font-size:11.5px;color:var(--dim);line-height:1.6;">TikTok・ニコニコのコメント画面をコピーして「貼り付けAI解析」タブに貼り付けると、AIが自動でコメント・スパチャを判定して一括記録できます。</div>
+    </div>
     <div style="display:flex;gap:4px;background:var(--panel2);border-radius:8px;padding:3px;margin-bottom:10px;">
       <div id="commentModeManual" class="auth-tab active" onclick="switchCommentMode('manual')" style="background:var(--pink);color:#fff;">手動入力</div>
       <div id="commentModePaste" class="auth-tab" onclick="switchCommentMode('paste')">貼り付けAI解析</div>
@@ -957,6 +970,9 @@ async function onLogin(u){
   initServiceWorker();
   // Chrome拡張にセッション情報を渡す
   syncToExtension();
+  // LIVE状態を5分ごとにポーリング
+  setTimeout(pollLiveStatus, 30000);
+  setInterval(pollLiveStatus, 5 * 60 * 1000);
 }
 function showAuth(){CU=null;document.getElementById('authScreen').style.display='flex';document.getElementById('appScreen').style.display='none';}
 
@@ -1133,16 +1149,42 @@ function openChDetail(ucId){
   CDetail=uc;const ch=uc.channels;
   const days=calcDays(uc.followed_since);
   const anniv=getAnniversary(uc);
-  document.getElementById('channelDetailContent').innerHTML=`
+  let snsLinks={};
+  try{const m=uc.memo;if(m&&m.startsWith('{'))snsLinks=JSON.parse(m);}catch(e){}
+  const icon=snsLinks.emoji||(uc.memo?.startsWith('emoji:')?uc.memo.slice(6):null)||pfIcon(ch.platform);
+  const html=`
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-      <div class="ch-avatar-placeholder" style="width:52px;height:52px;font-size:22px;">${pfIcon(ch.platform)}</div>
+      <div class="ch-avatar-placeholder" style="width:52px;height:52px;font-size:22px;">${icon}</div>
       <div style="flex:1;">
-        <div style="font-size:16px;font-weight:600;">${esc(ch.name)}</div>
+        <div style="font-size:16px;font-weight:600;">${esc(ch.name)}${ch.is_live?'<span class="ch-live" style="margin-left:6px;">● LIVE</span>':''}</div>
         <div style="font-size:12px;color:var(--dim);margin-top:3px;display:flex;align-items:center;gap:6px;">${ch.platform} ${daysBadge(days)}</div>
       </div>
     </div>
     ${anniv?`<div style="background:rgba(242,184,75,.1);border:1px solid rgba(242,184,75,.3);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:var(--gold);">${anniv.emoji} ${esc(ch.name)}を${anniv.msg}</div>`:''}
     <button class="primary full" style="margin-bottom:14px;" onclick="openFanCard('${ucId}')">📣 ファンカードを見る</button>
+    <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span>🔗 リンクまとめ</span><button class="ghost sm" onclick="toggleSNSEdit('${ucId}')" style="padding:4px 10px;font-size:11px;">編集</button></div>
+    <div id="snsLinksView" style="margin-bottom:12px;">${renderSNSLinks(snsLinks,ch)}</div>
+    <div id="snsEditForm" style="display:none;margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--dim);margin-bottom:8px;">プラットフォームのURLを登録してください。カスタムリンクも追加できます。</div>
+      <label style="font-size:11px;color:var(--dim);">YouTube</label><input type="text" id="sns_youtube" value="${esc(snsLinks.youtube||'')}" placeholder="https://youtube.com/@channel" style="margin-bottom:6px;">
+      <label style="font-size:11px;color:var(--dim);">Twitch</label><input type="text" id="sns_twitch" value="${esc(snsLinks.twitch||'')}" placeholder="https://twitch.tv/username" style="margin-bottom:6px;">
+      <label style="font-size:11px;color:var(--dim);">X (Twitter)</label><input type="text" id="sns_x" value="${esc(snsLinks.x||'')}" placeholder="https://x.com/username" style="margin-bottom:6px;">
+      <label style="font-size:11px;color:var(--dim);">TikTok</label><input type="text" id="sns_tiktok" value="${esc(snsLinks.tiktok||'')}" placeholder="https://tiktok.com/@username" style="margin-bottom:6px;">
+      <label style="font-size:11px;color:var(--dim);">ニコニコ</label><input type="text" id="sns_niconico" value="${esc(snsLinks.niconico||'')}" placeholder="https://nicovideo.jp/user/..." style="margin-bottom:6px;">
+      <label style="font-size:11px;color:var(--dim);">グッズショップ（BOOTH・suzuri等）</label><input type="text" id="sns_shop" value="${esc(snsLinks.shop||'')}" placeholder="https://booth.pm/..." style="margin-bottom:6px;">
+      <label style="font-size:11px;color:var(--dim);">ファンクラブ（Fantia・Patreon等）</label><input type="text" id="sns_fanclub" value="${esc(snsLinks.fanclub||'')}" placeholder="https://fantia.jp/..." style="margin-bottom:6px;">
+      <label style="font-size:11px;color:var(--dim);">Note / ブログ</label><input type="text" id="sns_note" value="${esc(snsLinks.note||'')}" placeholder="https://note.com/..." style="margin-bottom:6px;">
+      <label style="font-size:11px;color:var(--dim);">公式サイト</label><input type="text" id="sns_website" value="${esc(snsLinks.website||'')}" placeholder="https://..." style="margin-bottom:6px;">
+      <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px;">
+        <div style="font-size:11px;color:var(--dim);margin-bottom:6px;">カスタムリンク（最大3つ）</div>
+        ${[1,2,3].map(i=>`
+          <div style="display:flex;gap:6px;margin-bottom:6px;">
+            <input type="text" id="sns_custom${i}_label" value="${esc(snsLinks['custom'+i+'_label']||'')}" placeholder="ラベル名" style="width:90px;margin:0;flex-shrink:0;font-size:12px;">
+            <input type="text" id="sns_custom${i}_url" value="${esc(snsLinks['custom'+i+'_url']||'')}" placeholder="URL" style="flex:1;margin:0;font-size:12px;">
+          </div>`).join('')}
+      </div>
+      <button class="primary full" onclick="saveSNSLinks('${ucId}')" style="margin-top:8px;">保存</button>
+    </div>
     <div class="card-hd">ティアを変更</div>
     <div class="tier-btns" style="margin-bottom:16px;">
       <button class="tier-btn oshi ${uc.tier==='oshi'?'active':''}" onclick="changeTier('${ucId}','oshi',this)">⭐ 推し</button>
@@ -1156,9 +1198,9 @@ function openChDetail(ucId){
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
       <input type="checkbox" ${uc.notify_video?'checked':''} onchange="updNotify('${ucId}','notify_video',this.checked)" style="width:auto;min-height:auto;margin:0;accent-color:var(--pink);"><span style="font-size:13px;">新動画を通知</span>
     </label>`;
+  document.getElementById('channelDetailContent').innerHTML=html;
   openModal('channelDetailModal');
 }
-
 async function changeTier(ucId,tier,btn){
   const oc=AChans.filter(c=>c.tier==='oshi'&&c.id!==ucId).length;
   if(tier==='oshi'){
@@ -1200,7 +1242,8 @@ async function loadHomeData(){
   const{data:rl}=await sb.from('cheer_logs').select('*,channels(name)').eq('user_id',CU.id).order('created_at',{ascending:false}).limit(3);
   const rEl=document.getElementById('recentLogs');
   if(rEl)rEl.innerHTML=rl?.length?rl.map(l=>`<div class="log-item"><div class="log-type-icon ${l.log_type}">${liIcon(l.log_type)}</div><div class="log-info"><div class="log-title">${esc(l.title||liLbl(l.log_type))}</div><div class="log-meta">${l.channels?.name||''} · ${fmtD(l.logged_at)}</div></div>${l.amount?`<div class="log-amount">¥${l.amount.toLocaleString()}</div>`:''}</div>`).join(''):`<div class="empty"><div class="empty-icon">📝</div>ログがありません</div>`;
-  const today=new Date().toISOString().split('T')[0];const tom=new Date(Date.now()+86400000).toISOString().split('T')[0];
+  const nowJST=new Date(Date.now()+9*60*60*1000);
+  const today=nowJST.toISOString().split('T')[0];const tom=new Date(nowJST.getTime()+86400000).toISOString().split('T')[0];
   const ids=AChans.map(c=>c.channel_id);
   if(ids.length){
     const{data:ts}=await sb.from('channel_schedules').select('*,channels(name)').in('channel_id',ids).gte('starts_at',today+'T00:00:00').lt('starts_at',tom+'T00:00:00').order('starts_at');
@@ -1247,7 +1290,7 @@ async function loadSchedule(){
   const ms=`${calY}-${String(calM+1).padStart(2,'0')}-01`;
   const me=`${calY}-${String(calM+1).padStart(2,'0')}-${new Date(calY,calM+1,0).getDate()}`;
   const{data}=await sb.from('channel_schedules').select('*,channels(name)').in('channel_id',ids).gte('starts_at',ms).lte('starts_at',me+'T23:59:59');
-  const days=new Set((data||[]).map(s=>new Date(s.starts_at).getDate()));
+  const days=new Set((data||[]).map(s=>{const dt=toJST(s.starts_at);return dt?dt.getUTCDate():null}).filter(Boolean));
   document.querySelectorAll('.cal-cell:not(.blank)').forEach(c=>{
     const d=parseInt(c.textContent);
     if(days.has(d))c.classList.add('has-event');else c.classList.remove('has-event');
@@ -1769,10 +1812,11 @@ function liIcon(t){return{watch:'🎮',goods:'🛍',superchat:'💰',event:'🎪
 function liLbl(t){return{watch:'配信を視聴',goods:'グッズ購入',superchat:'投げ銭',event:'イベント参加',other:'その他'}[t]||t;}
 function stTypeLbl(t){return{live:'配信',video:'動画投稿',collab:'コラボ'}[t]||t;}
 function stLbl(s){return{upcoming:'予定',live:'LIVE中',ended:'終了'}[s]||s;}
-function fmtD(d){if(!d)return'';const dt=new Date(d);return`${dt.getFullYear()}/${dt.getMonth()+1}/${dt.getDate()}`;}
-function fmtT(d){if(!d)return'';const dt=new Date(d);return`${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}`;}
-function fmtDT(d){if(!d)return'';const dt=new Date(d);return`${dt.getFullYear()}/${dt.getMonth()+1}/${dt.getDate()} ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}`;}
-
+function toJST(d){if(!d)return null;const dt=new Date(d);dt.setTime(dt.getTime()+9*60*60*1000);return dt;}
+function fmtD(d){if(!d)return'';const dt=toJST(d);return`${dt.getUTCFullYear()}/${dt.getUTCMonth()+1}/${dt.getUTCDate()}`;}
+function fmtT(d){if(!d)return'';const dt=toJST(d);return`${dt.getUTCHours()}:${String(dt.getUTCMinutes()).padStart(2,'0')}`;}
+function fmtDT(d){if(!d)return'';const dt=toJST(d);return`${dt.getUTCFullYear()}/${dt.getUTCMonth()+1}/${dt.getUTCDate()} ${dt.getUTCHours()}:${String(dt.getUTCMinutes()).padStart(2,'0')}`;}
+function fmtDateJST(d){if(!d)return'';const dt=new Date(d);return dt.toLocaleDateString('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'numeric',day:'numeric'});}
 // ── 削除関数 ──
 async function deleteLog(id){
   if(!confirm('このログを削除しますか？'))return;
@@ -1895,6 +1939,96 @@ async function fetchSchedTitle(){
     toast('取得に失敗しました。手動でタイトルを入力してください。');
   }
   btn.disabled=false;btn.textContent='取得';
+}
+
+// ── リンクまとめ表示・編集 ──
+function renderSNSLinks(snsLinks, ch){
+  const platforms=[
+    {key:'youtube',label:'YouTube',icon:'▶',color:'#FF0000'},
+    {key:'twitch',label:'Twitch',icon:'🎮',color:'#9B8AFB'},
+    {key:'x',label:'X',icon:'𝕏',color:'#ABAEC0'},
+    {key:'tiktok',label:'TikTok',icon:'🎵',color:'#E0629E'},
+    {key:'niconico',label:'ニコニコ',icon:'ⓝ',color:'#45D6B0'},
+    {key:'shop',label:'グッズショップ',icon:'🛍',color:'#F2B84B'},
+    {key:'fanclub',label:'ファンクラブ',icon:'💜',color:'#E0629E'},
+    {key:'note',label:'Note',icon:'📝',color:'#45D6B0'},
+    {key:'website',label:'公式サイト',icon:'🌐',color:'#5B9DEF'},
+  ];
+  // プラットフォームのURLを自動設定
+  if(ch?.platform==='youtube'&&!snsLinks.youtube&&ch.platform_channel_id) snsLinks={...snsLinks,youtube:'https://youtube.com/'+ch.platform_channel_id};
+  if(ch?.platform==='twitch'&&!snsLinks.twitch&&ch.platform_channel_id) snsLinks={...snsLinks,twitch:'https://twitch.tv/'+ch.platform_channel_id};
+
+  const links=platforms.filter(p=>snsLinks[p.key]);
+  // カスタムリンク
+  const customs=[1,2,3].filter(i=>snsLinks['custom'+i+'_url']).map(i=>({
+    label:snsLinks['custom'+i+'_label']||'リンク'+i,
+    url:snsLinks['custom'+i+'_url'],
+    icon:'🔗',color:'var(--dim)'
+  }));
+
+  const allLinks=[...links.map(p=>({label:p.label,url:snsLinks[p.key],icon:p.icon,color:p.color})),...customs];
+  if(!allLinks.length) return '<div style="font-size:12px;color:var(--dim);">「編集」からリンクを追加できます<br><span style="font-size:11px;">YouTube・X・グッズショップ・ファンクラブなど</span></div>';
+  return allLinks.map(p=>`
+    <a href="${esc(p.url)}" target="_blank" rel="noopener"
+      style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--panel2);border-radius:8px;margin-bottom:6px;text-decoration:none;">
+      <span style="color:${p.color};font-size:15px;width:20px;text-align:center;flex-shrink:0;">${p.icon}</span>
+      <span style="font-size:13px;color:var(--text);flex-shrink:0;">${esc(p.label)}</span>
+      <span style="font-size:11px;color:var(--dim);margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px;">${esc(p.url.replace(/^https?:\/\//,''))}</span>
+      <span style="color:var(--dim);font-size:12px;flex-shrink:0;">↗</span>
+    </a>`).join('');
+}
+
+function toggleSNSEdit(ucId){
+  const form=document.getElementById('snsEditForm');
+  if(form)form.style.display=form.style.display==='none'?'block':'none';
+}
+
+async function saveSNSLinks(ucId){
+  const uc=AChans.find(c=>c.id===ucId);if(!uc)return;
+  let existing={};
+  try{if(uc.memo&&uc.memo.startsWith('{'))existing=JSON.parse(uc.memo);}catch(e){}
+  const fields=['youtube','twitch','x','tiktok','niconico','shop','fanclub','note','website'];
+  const links={...existing};
+  // 絵文字は保持
+  if(existing.emoji)links.emoji=existing.emoji;
+  fields.forEach(f=>{
+    const val=document.getElementById('sns_'+f)?.value?.trim();
+    if(val)links[f]=val; else delete links[f];
+  });
+  // カスタムリンク
+  [1,2,3].forEach(i=>{
+    const label=document.getElementById('sns_custom'+i+'_label')?.value?.trim();
+    const url=document.getElementById('sns_custom'+i+'_url')?.value?.trim();
+    if(url){links['custom'+i+'_label']=label||'リンク'+i;links['custom'+i+'_url']=url;}
+    else{delete links['custom'+i+'_label'];delete links['custom'+i+'_url'];}
+  });
+  const memo=Object.keys(links).length?JSON.stringify(links):null;
+  await sb.from('user_channels').update({memo}).eq('id',ucId);
+  uc.memo=memo;
+  const view=document.getElementById('snsLinksView');
+  if(view)view.innerHTML=renderSNSLinks(links,uc.channels);
+  const form=document.getElementById('snsEditForm');
+  if(form)form.style.display='none';
+  toast('✓ リンクを保存しました');
+  await loadChannels();
+}
+
+// ── YouTube LIVE状態ポーリング（5分ごと） ──
+async function pollLiveStatus(){
+  if(!CU||!AChans.length)return;
+  const ytOshi=AChans.filter(c=>c.tier==='oshi'&&c.channels?.platform==='youtube');
+  if(!ytOshi.length)return;
+  try{
+    const ids=ytOshi.map(uc=>uc.channels?.platform_channel_id).filter(Boolean);
+    for(const pid of ids){
+      const res=await fetch(WORKER_URL+'/api/youtube/schedules',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({channelId:pid,channelDbId:ytOshi.find(uc=>uc.channels?.platform_channel_id===pid)?.channel_id})
+      });
+    }
+    loadHomeData();
+  }catch(e){console.warn('Poll error:',e);}
 }
 
 // ── プラットフォームplaceholder更新 ──

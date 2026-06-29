@@ -5,7 +5,7 @@
 <meta name="google" content="notranslate">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CheerDesk — 推しを、もっと近くに。</title>
-<meta name="description" content="VTuber・配信者のファン向け推し活管理ツール。推し歴・推し活ログ・コメント履歴・応援スタンプをひとつのアプリで。">
+<meta name="description" content="VTuber・配信者のファン向け推し活管理ツール。推し歴・推し活ログ・コメント履歴・応援スタンプ・ファンカード生成をひとつのアプリで。">
 <meta property="og:title" content="CheerDesk — 推しを、もっと近くに。">
 <meta property="og:description" content="推し歴・推し活ログ・コメント履歴・応援をひとつのアプリで管理。ファンカードでXにシェアしよう。">
 <meta property="og:type" content="website">
@@ -24,8 +24,6 @@ html{scroll-behavior:smooth;}
 body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.7;}
 a{color:var(--pink);text-decoration:none;}
 .wrap{max-width:1000px;margin:0 auto;padding:0 24px;}
-
-/* NAV */
 nav.top{position:sticky;top:0;z-index:10;background:rgba(18,19,26,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);}
 nav.top .wrap{display:flex;justify-content:space-between;align-items:center;height:64px;}
 .logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:20px;letter-spacing:1px;color:var(--text);}
@@ -33,36 +31,27 @@ nav.top .wrap{display:flex;justify-content:space-between;align-items:center;heig
 .navlinks{display:flex;gap:28px;font-size:13.5px;align-items:center;}
 .navlinks a{color:var(--dim);}
 .navlinks a:hover{color:var(--text);}
-.nav-cta{background:var(--pink);color:#fff;font-weight:700;font-size:13px;padding:9px 20px;border-radius:8px;margin-left:8px;}
-.nav-cta:hover{opacity:.88;color:#fff;}
-
-/* BETA BAR */
+.nav-cta{background:var(--pink);color:#fff!important;font-weight:700;font-size:13px;padding:9px 20px;border-radius:8px;margin-left:8px;}
+.nav-cta:hover{opacity:.88;}
 .beta-bar{background:linear-gradient(90deg,rgba(224,98,158,.12) 0%,rgba(155,138,251,.1) 100%);border-bottom:1px solid rgba(224,98,158,.2);padding:10px 0;text-align:center;font-size:13px;}
 .beta-bar .inner{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;}
 .beta-tag{background:rgba(224,98,158,.2);color:var(--pink);border:1px solid rgba(224,98,158,.4);border-radius:20px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:500;padding:3px 10px;letter-spacing:.5px;}
-.beta-bar a{color:var(--pink);font-weight:600;}
-
-/* BUTTONS */
-.btn{display:inline-block;font-family:'Inter',sans-serif;font-weight:700;font-size:15px;padding:15px 30px;border-radius:10px;cursor:pointer;transition:opacity .15s,transform .1s;}
+.btn{display:inline-block;font-family:'Inter',sans-serif;font-weight:700;font-size:15px;padding:15px 30px;border-radius:10px;cursor:pointer;transition:opacity .15s,transform .1s;text-decoration:none;}
 .btn:active{transform:scale(.97);}
-.btn-primary{background:var(--pink);color:#fff;border:none;}
-.btn-primary:hover{opacity:.88;color:#fff;}
-.btn-ghost{background:none;border:1.5px solid var(--border);color:var(--text);font-size:14px;padding:13px 24px;}
+.btn-primary{background:var(--pink);color:#fff!important;border:none;}
+.btn-primary:hover{opacity:.88;}
+.btn-ghost{background:none;border:1.5px solid var(--border);color:var(--text)!important;font-size:14px;padding:13px 24px;}
 .btn-ghost:hover{border-color:var(--dim);}
-
-/* HERO */
 .hero{padding:80px 0 60px;overflow:hidden;}
 .hero .wrap{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;}
 .badge{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--dim);margin-bottom:24px;}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--pink);box-shadow:0 0 0 0 rgba(224,98,158,.5);animation:pulse 1.8s infinite;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--pink);animation:pulse 1.8s infinite;}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(224,98,158,.45);}70%{box-shadow:0 0 0 7px rgba(224,98,158,0);}100%{box-shadow:0 0 0 0 rgba(224,98,158,0);}}
 .hero h1{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:40px;line-height:1.3;letter-spacing:-.5px;margin:0 0 18px;}
 .hero h1 .accent{color:var(--pink);}
 .hero p.sub{font-size:15px;color:var(--dim);margin:0 0 32px;line-height:1.75;}
 .cta-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
 .hero-note{font-size:12px;color:var(--dim);margin-top:14px;}
-
-/* MOCKUP */
 .mockup-shell{background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.5);}
 .mockup-topbar{background:rgba(18,19,26,.96);border-bottom:1px solid var(--border);padding:10px 14px 0;}
 .mockup-title-row{display:flex;justify-content:space-between;align-items:center;padding-bottom:6px;}
@@ -74,7 +63,7 @@ nav.top .wrap{display:flex;justify-content:space-between;align-items:center;heig
 .mockup-tab.active{color:var(--text);border-bottom-color:var(--pink);}
 .mockup-body{padding:12px;background:var(--bg);}
 .mockup-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;}
-.mockup-card-hd{font-size:9px;color:var(--dim);letter-spacing:.5px;font-weight:600;margin-bottom:8px;display:flex;justify-content:space-between;}
+.mockup-card-hd{font-size:9px;color:var(--dim);letter-spacing:.5px;font-weight:600;margin-bottom:8px;}
 .mstat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
 .mstat{background:var(--panel2);border-radius:6px;padding:7px;}
 .mstat .num{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;}
@@ -88,27 +77,18 @@ nav.top .wrap{display:flex;justify-content:space-between;align-items:center;heig
 .mtag{font-size:8px;padding:1px 6px;border-radius:10px;border:1px solid;font-family:'IBM Plex Mono',monospace;white-space:nowrap;}
 .mtag.oshi{border-color:var(--pink);color:var(--pink);}
 .mtag.watch{border-color:var(--blue);color:var(--blue);}
-.mlog-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:10px;}
-.mlog-item:last-child{border-bottom:none;}
-.mlog-icon{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
 .mstamp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
 .mstamp{background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:7px 4px;text-align:center;font-size:16px;}
 .mstamp-cnt{font-size:7.5px;color:var(--dim);font-family:'IBM Plex Mono',monospace;}
-
-/* SOCIAL PROOF */
 .social-proof{padding:36px 0;border-top:1px solid var(--border);}
 .sp-inner{display:flex;justify-content:center;align-items:center;gap:48px;flex-wrap:wrap;}
 .sp-item{text-align:center;}
 .sp-num{font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:500;color:var(--pink);}
 .sp-lbl{font-size:12px;color:var(--dim);margin-top:2px;}
-
-/* SECTION */
 section{padding:72px 0;border-top:1px solid var(--border);}
 .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--pink);letter-spacing:1.5px;margin-bottom:10px;}
 h2.sec-title{font-family:'Space Grotesk',sans-serif;font-size:30px;margin:0 0 14px;}
 p.sec-lead{color:var(--dim);max-width:560px;margin:0 0 44px;font-size:15px;}
-
-/* FEATURES */
 .feat-section{display:flex;flex-direction:column;gap:72px;}
 .feat-row{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;}
 .feat-row.reverse{direction:rtl;}
@@ -116,27 +96,22 @@ p.sec-lead{color:var(--dim);max-width:560px;margin:0 0 44px;font-size:15px;}
 .feat-text .icon{font-size:32px;margin-bottom:14px;}
 .feat-text h3{font-family:'Space Grotesk',sans-serif;font-size:22px;margin:0 0 12px;}
 .feat-text p{font-size:14px;color:var(--dim);line-height:1.8;margin:0 0 16px;}
-.feat-tag{display:inline-block;font-size:10.5px;padding:3px 10px;border-radius:10px;font-family:'IBM Plex Mono',monospace;background:rgba(224,98,158,.1);color:var(--pink);border:1px solid rgba(224,98,158,.25);margin-right:6px;}
+.feat-tag{display:inline-block;font-size:10.5px;padding:3px 10px;border-radius:10px;font-family:'IBM Plex Mono',monospace;background:rgba(224,98,158,.1);color:var(--pink);border:1px solid rgba(224,98,158,.25);margin-right:6px;margin-bottom:4px;}
 .feat-tag.std{background:rgba(69,214,176,.1);color:var(--calm);border-color:rgba(69,214,176,.25);}
 .feat-tag.prm{background:rgba(242,184,75,.1);color:var(--gold);border-color:rgba(242,184,75,.25);}
 .feat-visual{border-radius:14px;overflow:hidden;border:1px solid var(--border);box-shadow:0 16px 40px rgba(0,0,0,.4);}
-
-/* MINI FEAT GRID */
 .mini-feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
 .mini-feat{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px;}
 .mini-feat .icon{font-size:24px;margin-bottom:10px;}
 .mini-feat h4{font-family:'Space Grotesk',sans-serif;font-size:15px;margin:0 0 6px;}
 .mini-feat p{font-size:12.5px;color:var(--dim);margin:0;line-height:1.65;}
-
-/* TIER */
+.mini-feat .tag{display:inline-block;font-size:9.5px;padding:2px 7px;border-radius:8px;margin-top:8px;font-family:'IBM Plex Mono',monospace;}
 .tier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:40px;}
 .tier-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px;}
 .tier-card .tier-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;font-family:'IBM Plex Mono',monospace;margin-bottom:10px;}
 .tier-card h4{font-family:'Space Grotesk',sans-serif;font-size:16px;margin:0 0 8px;}
 .tier-card p{font-size:12.5px;color:var(--dim);margin:0;line-height:1.65;}
 .tier-card .tier-limit{font-size:11px;font-family:'IBM Plex Mono',monospace;margin-top:10px;padding:6px 10px;background:var(--panel2);border-radius:6px;}
-
-/* PRICING */
 .price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
 .price-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:28px 24px;display:flex;flex-direction:column;}
 .price-card.featured{border-color:var(--pink);position:relative;}
@@ -144,56 +119,45 @@ p.sec-lead{color:var(--dim);max-width:560px;margin:0 0 44px;font-size:15px;}
 .price-name{font-family:'Space Grotesk',sans-serif;font-size:15px;color:var(--dim);margin-bottom:6px;}
 .price-amount{font-family:'IBM Plex Mono',monospace;font-size:30px;color:var(--text);margin-bottom:2px;}
 .price-amount span{font-size:13px;color:var(--dim);}
-.price-note{font-size:11px;color:var(--dim);margin-bottom:4px;}
+.price-note{font-size:11px;color:var(--pink);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;}
 .price-card ul{list-style:none;padding:0;margin:20px 0 0;font-size:13px;color:var(--dim);flex:1;}
 .price-card li{padding:7px 0;border-top:1px solid var(--border);display:flex;align-items:flex-start;gap:7px;}
 .price-card li:first-child{border-top:none;}
 .price-card li::before{content:"✓";color:var(--calm);font-weight:700;flex-shrink:0;margin-top:.1em;}
 .price-card li.no::before{content:"✗";color:var(--dim);}
-.price-cta{display:block;text-align:center;background:var(--panel2);border:1px solid var(--border);color:var(--text);font-weight:600;font-size:13px;padding:11px;border-radius:8px;margin-top:20px;transition:border-color .15s;}
-.price-cta:hover{border-color:var(--pink);color:var(--pink);}
-.price-card.featured .price-cta{background:var(--pink);border-color:var(--pink);color:#fff;}
-.price-card.featured .price-cta:hover{opacity:.88;color:#fff;}
+.price-cta{display:block;text-align:center;background:var(--panel2);border:1px solid var(--border);color:var(--text)!important;font-weight:600;font-size:13px;padding:11px;border-radius:8px;margin-top:20px;transition:border-color .15s;}
+.price-cta:hover{border-color:var(--pink);color:var(--pink)!important;}
+.price-card.featured .price-cta{background:var(--pink);border-color:var(--pink);color:#fff!important;}
+.price-card.featured .price-cta:hover{opacity:.88;}
 .discount-box{background:rgba(224,98,158,.06);border:1px solid rgba(224,98,158,.2);border-radius:10px;padding:14px 18px;margin-top:24px;font-size:13px;}
 .discount-box h4{font-family:'Space Grotesk',sans-serif;font-size:14px;color:var(--pink);margin:0 0 8px;}
 .discount-row{display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0;border-top:1px solid var(--border);}
 .discount-row:first-of-type{border-top:none;}
 .discount-row .key{color:var(--dim);}
 .discount-row .val{color:var(--pink);font-family:'IBM Plex Mono',monospace;font-weight:500;}
-
-/* FAQ */
 .faq-item{border-top:1px solid var(--border);padding:20px 0;}
 .faq-item:first-child{border-top:none;}
 .faq-item h4{font-family:'Space Grotesk',sans-serif;font-size:15px;margin:0 0 8px;}
 .faq-item p{font-size:13.5px;color:var(--dim);margin:0;line-height:1.75;}
-
-/* OpsDesk連携 */
 .opsdesk-banner{background:linear-gradient(135deg,rgba(69,214,176,.08) 0%,rgba(91,157,239,.06) 100%);border:1px solid rgba(69,214,176,.2);border-radius:16px;padding:32px 36px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;margin-top:48px;}
 .opsdesk-banner-text h3{font-family:'Space Grotesk',sans-serif;font-size:20px;margin:0 0 8px;}
 .opsdesk-banner-text p{font-size:13.5px;color:var(--dim);margin:0;line-height:1.65;}
-.btn-opsdesk{display:inline-flex;align-items:center;gap:8px;background:var(--calm);color:#0B231C;font-weight:700;font-size:14px;padding:13px 24px;border-radius:10px;white-space:nowrap;transition:opacity .15s;}
-.btn-opsdesk:hover{opacity:.88;color:#0B231C;}
-
-/* CTA BANNER */
+.btn-opsdesk{display:inline-flex;align-items:center;gap:8px;background:var(--calm);color:#0B231C!important;font-weight:700;font-size:14px;padding:13px 24px;border-radius:10px;white-space:nowrap;transition:opacity .15s;}
+.btn-opsdesk:hover{opacity:.88;}
 .cta-banner{background:linear-gradient(135deg,rgba(224,98,158,.1) 0%,rgba(155,138,251,.08) 100%);border:1px solid rgba(224,98,158,.2);border-radius:20px;padding:56px 48px;text-align:center;margin:72px 0 0;}
 .cta-banner h2{font-family:'Space Grotesk',sans-serif;font-size:32px;margin:0 0 14px;}
 .cta-banner p{color:var(--dim);font-size:15px;margin:0 0 32px;}
 .cta-banner .cta-row{justify-content:center;}
-
-/* FOOTER */
 footer{padding:40px 0;border-top:1px solid var(--border);}
 footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
 footer .flinks{display:flex;gap:18px;font-size:12.5px;}
 footer .copy{font-size:12px;color:var(--dim);}
-
-/* LEGAL */
 .legal h2{font-family:'Space Grotesk',sans-serif;font-size:20px;margin:0 0 18px;}
 .legal h3{font-size:14px;margin:26px 0 8px;color:var(--text);}
 .legal p,.legal li{font-size:13px;color:var(--dim);line-height:1.75;}
 .legal table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px;}
 .legal table td{padding:9px 0;border-top:1px solid var(--border);color:var(--dim);vertical-align:top;}
 .legal table td:first-child{width:160px;color:var(--text);}
-
 @media(max-width:800px){
   .hero .wrap{grid-template-columns:1fr;}
   .hero-right{display:none;}
@@ -209,11 +173,10 @@ footer .copy{font-size:12px;color:var(--dim);}
 </head>
 <body>
 
-<!-- BETA BAR -->
 <div class="beta-bar">
   <div class="inner">
     <span class="beta-tag">OPEN BETA</span>
-    <span>オープンベータ公開中 — フィードバックは <a href="https://x.com/OpsDesk_Officia" target="_blank" rel="noopener">X(@OpsDesk_Officia)</a> へ</span>
+    <span>オープンベータ公開中 — フィードバックは <a href="https://x.com/OpsDesk_Officia" target="_blank" rel="noopener">X(@OpsDesk_Officia)</a> へ · Stripe決済対応済み</span>
   </div>
 </div>
 
@@ -230,21 +193,40 @@ footer .copy{font-size:12px;color:var(--dim);}
   </div>
 </nav>
 
-<!-- HERO -->
 <header class="hero">
   <div class="wrap">
     <div class="hero-left">
       <div class="badge"><span class="dot"></span>OPEN BETA — VTuber・配信者ファン向け推し活管理ツール</div>
       <h1>推しを、<br><span class="accent">もっと近くに。</span></h1>
-      <p class="sub">推し歴・推し活ログ・コメント履歴・応援スタンプをひとつのアプリで。あなたの推し活を記録して、ファンカードでシェアしよう。<br><span style="font-size:13px;color:var(--pink);">オープンベータ公開中 — 今すぐ無料で始められます。</span></p>
+      <p class="sub">推しのLIVEを見逃さない。推し活を記録する。ファンカードでシェアする。<br>それだけでいい。<br><span style="font-size:13px;color:var(--pink);">YouTube・Twitch・TikTok・ニコニコ対応。フリーから始められます。</span></p>
+
+      <!-- 30秒で理解できる機能サマリー -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:28px;">
+        <div style="display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 12px;">
+          <span style="font-size:18px;">🔔</span>
+          <div><div style="font-size:12px;font-weight:600;">配信通知</div><div style="font-size:11px;color:var(--dim);">LIVE開始を即座にお知らせ</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 12px;">
+          <span style="font-size:18px;">📝</span>
+          <div><div style="font-size:12px;font-weight:600;">推し活ログ</div><div style="font-size:11px;color:var(--dim);">費用・視聴・グッズを記録</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 12px;">
+          <span style="font-size:18px;">📣</span>
+          <div><div style="font-size:12px;font-weight:600;">ファンカード</div><div style="font-size:11px;color:var(--dim);">推し活実績をXでシェア</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 12px;">
+          <span style="font-size:18px;">🤖</span>
+          <div><div style="font-size:12px;font-weight:600;">AIコメント解析</div><div style="font-size:11px;color:var(--dim);">貼り付けるだけで履歴に</div></div>
+        </div>
+      </div>
+
       <div class="cta-row">
         <a class="btn btn-primary" href="/app.html">無料で始める →</a>
-        <a class="btn btn-ghost" href="#features">機能を見る</a>
+        <a class="btn btn-ghost" href="#features">詳しく見る</a>
       </div>
-      <p class="hero-note">クレジットカード不要 · フリープランは永久無料</p>
+      <p class="hero-note">クレジットカード不要 · フリープランは永久無料 · 登録1分</p>
     </div>
     <div class="hero-right">
-      <!-- モックアップ -->
       <div class="mockup-shell">
         <div class="mockup-topbar">
           <div class="mockup-title-row">
@@ -259,16 +241,11 @@ footer .copy{font-size:12px;color:var(--dim);}
           </div>
         </div>
         <div class="mockup-body">
-          <!-- LIVE中バナー -->
           <div style="background:rgba(255,107,91,.08);border:1px solid rgba(255,107,91,.3);border-radius:8px;padding:9px 11px;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
-            <span style="width:6px;height:6px;border-radius:50%;background:var(--live);display:inline-block;animation:pulse 1.8s infinite;flex-shrink:0;"></span>
-            <div>
-              <div style="font-size:10.5px;font-weight:600;">○○○○ch</div>
-              <div style="font-size:9px;color:var(--dim);">【雑談】みんなと話したい配信</div>
-            </div>
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--live);display:inline-block;flex-shrink:0;"></span>
+            <div><div style="font-size:10.5px;font-weight:600;">○○○○ch</div><div style="font-size:9px;color:var(--dim);">【雑談】みんなと話したい配信</div></div>
             <span style="font-size:9px;color:var(--live);font-weight:600;margin-left:auto;">LIVE</span>
           </div>
-          <!-- 今月の推し活 -->
           <div class="mockup-card">
             <div class="mockup-card-hd">今月の推し活</div>
             <div class="mstat-row">
@@ -278,17 +255,16 @@ footer .copy{font-size:12px;color:var(--dim);}
               <div class="mstat"><div class="num" style="color:var(--purple);">15</div><div class="lbl">応援送信</div></div>
             </div>
           </div>
-          <!-- 今日の予定 -->
           <div class="mockup-card">
             <div class="mockup-card-hd">今日の予定</div>
             <div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border);">
               <span style="width:6px;height:6px;border-radius:50%;background:var(--live);flex-shrink:0;"></span>
-              <div style="flex:1;"><div style="font-size:10px;font-weight:500;">【歌ってみた】新曲カバー</div><div style="font-size:8.5px;color:var(--dim);font-family:'IBM Plex Mono',monospace;">○○○○ch · 21:00</div></div>
+              <div style="flex:1;"><div style="font-size:10px;font-weight:500;">【歌ってみた】新曲カバー</div><div style="font-size:8.5px;color:var(--dim);">○○○○ch · 21:00</div></div>
               <span class="mtag oshi">LIVE</span>
             </div>
             <div style="display:flex;align-items:center;gap:7px;padding:5px 0;">
               <span style="width:6px;height:6px;border-radius:50%;background:var(--calm);flex-shrink:0;"></span>
-              <div style="flex:1;"><div style="font-size:10px;font-weight:500;">コラボ配信</div><div style="font-size:8.5px;color:var(--dim);font-family:'IBM Plex Mono',monospace;">△△△ch · 22:30</div></div>
+              <div style="flex:1;"><div style="font-size:10px;font-weight:500;">コラボ配信</div><div style="font-size:8.5px;color:var(--dim);">△△△ch · 22:30</div></div>
               <span class="mtag watch" style="border-color:var(--calm);color:var(--calm);">予定</span>
             </div>
           </div>
@@ -298,39 +274,36 @@ footer .copy{font-size:12px;color:var(--dim);}
   </div>
 </header>
 
-<!-- SOCIAL PROOF -->
-<div class="social-proof" style="border-top:1px solid var(--border);">
+<div class="social-proof">
   <div class="wrap">
     <div class="sp-inner">
+      <div class="sp-item"><div class="sp-num">1分</div><div class="sp-lbl">で登録完了</div></div>
       <div class="sp-item"><div class="sp-num">4</div><div class="sp-lbl">対応プラットフォーム</div></div>
-      <div class="sp-item"><div class="sp-num">3</div><div class="sp-lbl">チャンネルティア</div></div>
-      <div class="sp-item"><div class="sp-num">¥0</div><div class="sp-lbl">フリープラン</div></div>
+      <div class="sp-item"><div class="sp-num">¥0</div><div class="sp-lbl">フリープランあり</div></div>
       <div class="sp-item"><div class="sp-num">∞</div><div class="sp-lbl">ウォッチ登録数</div></div>
     </div>
   </div>
 </div>
 
-<!-- FEATURES -->
 <section id="features">
   <div class="wrap">
     <div class="eyebrow">FEATURES</div>
     <h2 class="sec-title">推し活のすべてを、ここに。</h2>
     <p class="sec-lead">YouTube・Twitch・TikTok・ニコニコに対応。推しのチャンネルを登録して、推し活を記録して、応援を届けよう。</p>
-
     <div class="feat-section">
-      <!-- 推しリスト -->
+
       <div class="feat-row">
         <div class="feat-text">
           <div class="icon">⭐</div>
           <h3>推しを3つのティアで管理</h3>
-          <p>「推し」「ウォッチ」「知っている」の3段階でチャンネルを整理。推しには全機能を、ウォッチには通知だけ、知っているには記録だけ。YouTube・Twitch・TikTok・ニコニコ生放送の4プラットフォームに対応。</p>
+          <p>「推し」「ウォッチ」「知っている」の3段階でチャンネルを整理。推しには全機能を、ウォッチには通知だけ。絵文字アイコンで自分だけのリストをカスタマイズ。名前順・推し歴順でソートも可能。</p>
           <span class="feat-tag">全プラン</span>
         </div>
         <div class="feat-visual">
           <div style="background:var(--panel);padding:16px;">
-            <div style="font-size:10px;color:var(--dim);margin-bottom:10px;font-weight:600;letter-spacing:.5px;">推しリスト</div>
+            <div style="font-size:10px;color:var(--dim);margin-bottom:10px;font-weight:600;letter-spacing:.5px;">推しリスト <span style="color:var(--dim);font-weight:400;">名前順 ▾</span></div>
             <div class="mch-item">
-              <div class="mch-avatar">▶</div>
+              <div class="mch-avatar">💜</div>
               <div class="mch-info">
                 <div class="mch-name">○○○○ch <span style="font-size:8px;background:rgba(255,107,91,.15);color:var(--live);border-radius:10px;padding:1px 6px;margin-left:4px;">● LIVE</span></div>
                 <div class="mch-meta">youtube · 推し歴365日</div>
@@ -346,7 +319,7 @@ footer .copy{font-size:12px;color:var(--dim);}
               <span class="mtag watch">👁 ウォッチ</span>
             </div>
             <div class="mch-item" style="border-bottom:none;">
-              <div class="mch-avatar">🎵</div>
+              <div class="mch-avatar">🌸</div>
               <div class="mch-info">
                 <div class="mch-name">□□□ch</div>
                 <div class="mch-meta">tiktok</div>
@@ -357,51 +330,52 @@ footer .copy{font-size:12px;color:var(--dim);}
         </div>
       </div>
 
-      <!-- 推し活ログ -->
       <div class="feat-row reverse">
         <div class="feat-text">
           <div class="icon">📝</div>
           <h3>推し活ログで記録を積み上げる</h3>
-          <p>配信視聴・グッズ購入・スパチャ・イベント参加など、推し活のすべてを記録。月次の集計・年間費用グラフで推し活の歩みを振り返れます。記念日（推し歴1ヶ月・100日・1周年）は自動でバナー表示。</p>
+          <p>配信視聴・グッズ購入・スパチャ・イベント参加など、推し活のすべてを記録。月次の集計・年間費用グラフで推し活の歩みを振り返れます。記念日（推し歴1ヶ月・100日・1周年）は自動でバナー表示。推し活スコア・ランクで今月の活動を可視化。</p>
           <span class="feat-tag std">スタンダード以上</span>
           <span class="feat-tag prm">年間グラフはプレミアム</span>
         </div>
         <div class="feat-visual">
           <div style="background:var(--panel);padding:16px;">
-            <div style="font-size:10px;color:var(--dim);margin-bottom:10px;font-weight:600;letter-spacing:.5px;">今月の集計</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;">
+            <div style="background:rgba(242,184,75,.08);border:1px solid rgba(242,184,75,.25);border-radius:8px;padding:8px 10px;margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+              <span style="font-size:18px;">🎂</span>
+              <div><div style="font-size:10px;font-weight:600;color:var(--gold);">○○○○chを推し始めて1周年！</div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
               <div class="mstat"><div class="num" style="color:var(--calm);">12</div><div class="lbl">ログ件数</div></div>
               <div class="mstat"><div class="num" style="color:var(--gold);">¥4,800</div><div class="lbl">合計費用</div></div>
             </div>
-            <div class="mlog-item">
-              <div class="mlog-icon" style="background:rgba(69,214,176,.12);">🎮</div>
-              <div style="flex:1;"><div style="font-size:10px;font-weight:500;">雑談配信を視聴</div><div style="font-size:8.5px;color:var(--dim);">○○○○ch · 今日</div></div>
-            </div>
-            <div class="mlog-item">
-              <div class="mlog-icon" style="background:rgba(242,184,75,.12);">🛍</div>
-              <div style="flex:1;"><div style="font-size:10px;font-weight:500;">アクリルスタンド購入</div><div style="font-size:8.5px;color:var(--dim);">○○○○ch · 昨日</div></div>
-              <div style="font-size:10px;color:var(--gold);font-family:'IBM Plex Mono',monospace;">¥3,800</div>
-            </div>
-            <div class="mlog-item" style="border-bottom:none;">
-              <div class="mlog-icon" style="background:rgba(255,107,91,.12);">💰</div>
-              <div style="flex:1;"><div style="font-size:10px;font-weight:500;">スパチャ</div><div style="font-size:8.5px;color:var(--dim);">○○○○ch · 3日前</div></div>
-              <div style="font-size:10px;color:var(--gold);font-family:'IBM Plex Mono',monospace;">¥500</div>
+            <div style="font-size:9px;color:var(--dim);margin-bottom:6px;font-weight:600;">年間費用グラフ</div>
+            <div style="display:flex;align-items:flex-end;gap:3px;height:40px;">
+              <div style="flex:1;background:var(--calm);border-radius:2px 2px 0 0;height:25%;"></div>
+              <div style="flex:1;background:var(--calm);border-radius:2px 2px 0 0;height:44%;"></div>
+              <div style="flex:1;background:var(--calm);border-radius:2px 2px 0 0;height:19%;"></div>
+              <div style="flex:1;background:var(--calm);border-radius:2px 2px 0 0;height:60%;"></div>
+              <div style="flex:1;background:var(--calm);border-radius:2px 2px 0 0;height:38%;"></div>
+              <div style="flex:1;background:var(--pink);border-radius:2px 2px 0 0;height:75%;"></div>
+              <div style="flex:1;background:var(--calm);border-radius:2px 2px 0 0;height:31%;opacity:.4;"></div>
+              <div style="flex:1;background:var(--calm);border-radius:2px 2px 0 0;height:56%;opacity:.4;"></div>
+              <div style="flex:1;background:var(--calm);border-radius:2px 2px 0 0;height:47%;opacity:.4;"></div>
+              <div style="flex:1;background:var(--calm);border-radius:2px 2px 0 0;height:69%;opacity:.4;"></div>
+              <div style="flex:1;background:var(--calm);border-radius:2px 2px 0 0;height:52%;opacity:.4;"></div>
+              <div style="flex:1;background:var(--calm);border-radius:2px 2px 0 0;height:100%;opacity:.4;"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 応援 -->
       <div class="feat-row">
         <div class="feat-text">
           <div class="icon">📣</div>
-          <h3>応援スタンプ・レターで気持ちを届ける</h3>
-          <p>8種類の応援スタンプで気持ちを記録。応援レターで推しへのメッセージを残せます。ファンカードで推し活実績をカード化してXにシェアしよう。不適切な言葉は自動フィルタリング。</p>
+          <h3>応援・ファンカードで存在をアピール</h3>
+          <p>8種類の応援スタンプで気持ちを記録。応援レターで推しへのメッセージを残せます。推し活実績をファンカードにしてXにシェア。Canvas APIでカード画像を生成してダウンロードもできます。不適切な言葉は自動フィルタリング。</p>
           <span class="feat-tag">全プラン</span>
         </div>
         <div class="feat-visual">
           <div style="background:var(--panel);padding:16px;">
-            <div style="font-size:10px;color:var(--dim);margin-bottom:10px;font-weight:600;letter-spacing:.5px;">応援スタンプ</div>
             <div class="mstamp-grid" style="margin-bottom:12px;">
               <div class="mstamp">🔥<div class="mstamp-cnt">24件</div></div>
               <div class="mstamp">💜<div class="mstamp-cnt">18件</div></div>
@@ -412,7 +386,6 @@ footer .copy{font-size:12px;color:var(--dim);}
               <div class="mstamp">💪<div class="mstamp-cnt">3件</div></div>
               <div class="mstamp">🎵<div class="mstamp-cnt">2件</div></div>
             </div>
-            <!-- ファンカードプレビュー -->
             <div style="background:linear-gradient(135deg,#1A1C26,#20152A);border:1px solid var(--pink);border-radius:8px;padding:10px;text-align:center;">
               <div style="font-size:8px;color:var(--pink);font-family:'IBM Plex Mono',monospace;margin-bottom:4px;">FAN CARD</div>
               <div style="font-size:11px;font-weight:700;color:var(--pink);margin-bottom:8px;">○○○○ch</div>
@@ -422,49 +395,55 @@ footer .copy{font-size:12px;color:var(--dim);}
                 <div style="background:rgba(255,255,255,.05);border-radius:5px;padding:5px;"><div style="font-size:11px;color:var(--pink);">¥4,800</div><div style="font-size:7px;color:var(--dim);">費用</div></div>
                 <div style="background:rgba(255,255,255,.05);border-radius:5px;padding:5px;"><div style="font-size:11px;color:var(--purple);">80回</div><div style="font-size:7px;color:var(--dim);">応援</div></div>
               </div>
+              <div style="font-size:8px;color:var(--dim);margin-top:8px;display:flex;gap:6px;justify-content:center;">
+                <span style="background:var(--panel2);padding:3px 8px;border-radius:6px;">𝕏 シェア</span>
+                <span style="background:var(--panel2);padding:3px 8px;border-radius:6px;">画像保存</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
     </div>
 
-    <!-- ミニ機能グリッド -->
     <div class="mini-feat-grid" style="margin-top:60px;">
       <div class="mini-feat">
         <div class="icon">📅</div>
         <h4>スケジュール管理</h4>
-        <p>推しの配信・動画投稿予定をカレンダーで管理。手動追加に対応。</p>
+        <p>推しの配信・動画投稿予定をカレンダーで管理。手動追加に対応。予定のある日に自動でドット表示。</p>
       </div>
       <div class="mini-feat">
         <div class="icon">💬</div>
         <h4>コメント履歴</h4>
-        <p>推しへのコメント・スパチャを記録。初コメントは自動で記念日として検出。</p>
+        <p>推しへのコメント・スパチャを記録。初コメントは自動で記念日として検出。TikTok・ニコニコはAI自動解析。</p>
+        <span class="tag" style="background:rgba(242,184,75,.1);color:var(--gold);border:1px solid rgba(242,184,75,.25);">プレミアム</span>
       </div>
       <div class="mini-feat">
         <div class="icon">🤖</div>
         <h4>AIコメント解析</h4>
-        <p>TikTok・ニコニコのコメントをコピペするだけでAIが自動整形・一括記録。</p>
+        <p>TikTok・ニコニコのコメントをコピペするだけでClaudeが自動整形。スパチャも自動判定して一括記録。</p>
+        <span class="tag" style="background:rgba(242,184,75,.1);color:var(--gold);border:1px solid rgba(242,184,75,.25);">プレミアム</span>
       </div>
       <div class="mini-feat">
         <div class="icon">📊</div>
-        <h4>推し活スコア</h4>
-        <p>ログ・コメント・応援をポイント化。🌱ビギナーから💎ダイヤまでランクアップ。</p>
+        <h4>推し活スコア・ランク</h4>
+        <p>ログ・コメント・応援をポイント化。🌱ビギナーから💎ダイヤまで今月の推し活をランキング化。</p>
       </div>
       <div class="mini-feat">
         <div class="icon">📄</div>
         <h4>PDF出力</h4>
-        <p>今月の推し活ログをきれいなPDFレポートとして保存できます（プレミアム）。</p>
+        <p>今月の推し活ログをきれいなPDFレポートとして保存。チャンネル別に絞り込んでエクスポートできます。</p>
+        <span class="tag" style="background:rgba(242,184,75,.1);color:var(--gold);border:1px solid rgba(242,184,75,.25);">プレミアム</span>
       </div>
       <div class="mini-feat">
-        <div class="icon">🔔</div>
-        <h4>プッシュ通知</h4>
-        <p>推しのLIVE開始・新動画投稿をプッシュ通知でお知らせ。見逃しゼロへ。</p>
+        <div class="icon">🙋</div>
+        <h4>プロフィールページ</h4>
+        <p>推し活実績を公開ページとして共有。推しリスト・ログ件数・費用・応援数をカード形式で表示してXでシェア。</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- チャンネルティア説明 -->
 <section id="tiers">
   <div class="wrap">
     <div class="eyebrow">CHANNEL TIERS</div>
@@ -474,13 +453,13 @@ footer .copy{font-size:12px;color:var(--dim);}
       <div class="tier-card" style="border-color:var(--pink);">
         <div class="tier-badge" style="background:rgba(224,98,158,.12);color:var(--pink);border:1px solid rgba(224,98,158,.3);">⭐ 推し</div>
         <h4>フル機能・全通知</h4>
-        <p>配信通知・推し活ログ・コメント履歴・応援スタンプ・ファンカード生成。推し歴カウンターと記念日バナーも。</p>
+        <p>配信通知・推し活ログ・コメント履歴・応援スタンプ・ファンカード生成。推し歴カウンター・記念日バナー・絵文字アイコン設定も。</p>
         <div class="tier-limit" style="color:var(--pink);">フリー: 1人 / Std: 5人 / Prm: 無制限</div>
       </div>
       <div class="tier-card">
         <div class="tier-badge" style="background:rgba(91,157,239,.1);color:var(--blue);border:1px solid rgba(91,157,239,.25);">👁 ウォッチ</div>
         <h4>通知のみ</h4>
-        <p>配信・新動画の通知を受け取れます。ログや応援機能は使えませんが、チェックしておきたいチャンネルに。</p>
+        <p>配信・新動画の通知を受け取れます。ログや応援機能は使えませんが、気になるチャンネルのチェックに。</p>
         <div class="tier-limit" style="color:var(--blue);">全プラン: 無制限</div>
       </div>
       <div class="tier-card">
@@ -493,74 +472,67 @@ footer .copy{font-size:12px;color:var(--dim);}
   </div>
 </section>
 
-<!-- PRICING -->
 <section id="pricing">
   <div class="wrap">
     <div class="eyebrow">PRICING</div>
     <h2 class="sec-title">シンプルな料金体系。</h2>
-    <p class="sec-lead">フリープランは永久無料。Chrome拡張インストールと年払いで最大割引が適用されます。</p>
+    <p class="sec-lead">フリープランは永久無料。Chrome拡張インストールと年払いで最大割引が適用されます。Stripe決済対応済み。</p>
     <div class="price-grid">
-      <!-- フリー -->
       <div class="price-card">
         <div class="price-name">フリー</div>
         <div class="price-amount">¥0</div>
-        <div class="price-note">永久無料</div>
+        <div class="price-note" style="color:var(--dim);">永久無料</div>
         <ul>
-          <li>推し登録 1人</li>
-          <li>ウォッチ・知っている 無制限</li>
+          <li>推し登録 1人 · ウォッチ無制限</li>
           <li>スケジュール管理</li>
           <li>応援スタンプ（月3回）</li>
-          <li>ファンカード生成</li>
+          <li>ファンカード生成・画像保存</li>
+          <li>プロフィールページ</li>
+          <li>オンボーディング・ガイド</li>
           <li class="no" style="color:var(--dim);">推し活ログ</li>
-          <li class="no" style="color:var(--dim);">コメント履歴</li>
+          <li class="no" style="color:var(--dim);">コメント履歴・AI解析</li>
         </ul>
         <a class="price-cta" href="/app.html">無料で始める</a>
       </div>
-      <!-- スタンダード -->
       <div class="price-card featured">
         <div class="price-name">スタンダード</div>
         <div class="price-amount">¥780<span>/月〜</span></div>
-        <div class="price-note" style="color:var(--pink);">年払い+拡張で ¥480/月</div>
+        <div class="price-note">年払い+拡張で ¥480/月</div>
         <ul>
-          <li>推し登録 5人</li>
-          <li>ウォッチ・知っている 無制限</li>
-          <li>推し活ログ・費用記録</li>
+          <li>推し登録 5人 · ウォッチ無制限</li>
+          <li>推し活ログ・費用記録・削除</li>
           <li>応援スタンプ 無制限</li>
           <li>推し活スコア・ランク</li>
-          <li>今月のサマリー生成</li>
-          <li class="no" style="color:var(--dim);">コメント履歴</li>
+          <li>今月のサマリー自動生成</li>
+          <li>チャンネルソート・絵文字アイコン</li>
+          <li class="no" style="color:var(--dim);">コメント履歴・AI解析</li>
           <li class="no" style="color:var(--dim);">年間グラフ・PDF出力</li>
         </ul>
         <a class="price-cta" href="/app.html">始める</a>
       </div>
-      <!-- プレミアム -->
       <div class="price-card">
         <div class="price-name">プレミアム</div>
         <div class="price-amount">¥1,580<span>/月〜</span></div>
-        <div class="price-note" style="color:var(--gold);">年払い+拡張で ¥980/月</div>
+        <div class="price-note">年払い+拡張で ¥980/月</div>
         <ul>
           <li>推し登録 無制限</li>
           <li>スタンダードの全機能</li>
           <li>コメント履歴・スパチャ記録</li>
+          <li>AIコメント自動解析（TikTok・ニコニコ）</li>
           <li>年間費用グラフ</li>
           <li>推し活レポートPDF出力</li>
-          <li>AIコメント自動解析</li>
           <li>OpsDesk連携（近日対応）</li>
         </ul>
         <a class="price-cta" href="/app.html">始める</a>
       </div>
     </div>
-
-    <!-- 割引詳細 -->
     <div class="discount-box" style="margin-top:24px;">
       <h4>💡 割引の仕組み</h4>
-      <div class="discount-row"><span class="key">年払い割引</span><span class="val">スタンダード ¥200引き / プレミアム ¥300引き</span></div>
-      <div class="discount-row"><span class="key">Chrome拡張割引</span><span class="val">スタンダード ¥100引き / プレミアム ¥300引き</span></div>
+      <div class="discount-row"><span class="key">年払い割引</span><span class="val">Std ¥200引き / Prm ¥300引き</span></div>
+      <div class="discount-row"><span class="key">Chrome拡張割引（準備中）</span><span class="val">Std ¥100引き / Prm ¥300引き</span></div>
       <div class="discount-row"><span class="key">両方適用（最安値）</span><span class="val">Std ¥480/月 · Prm ¥980/月</span></div>
       <div class="discount-row"><span class="key">拡張割引の維持</span><span class="val">PCで一度認証すればスマホでも有効。明示的に解除するまで継続。</span></div>
     </div>
-
-    <!-- OpsDesk連携バナー -->
     <div class="opsdesk-banner">
       <div class="opsdesk-banner-text">
         <h3>活動者の方は OpsDesk もどうぞ</h3>
@@ -571,34 +543,37 @@ footer .copy{font-size:12px;color:var(--dim);}
   </div>
 </section>
 
-<!-- FAQ -->
 <section id="faq">
   <div class="wrap">
     <div class="eyebrow">FAQ</div>
     <h2 class="sec-title">よくある質問</h2>
     <div class="faq-item">
       <h4>対応しているプラットフォームは？</h4>
-      <p>YouTube・Twitch・TikTok・ニコニコ生放送に対応しています。将来的にはさらに拡大予定です。</p>
+      <p>YouTube・Twitch・TikTok・ニコニコ生放送に対応しています。TikTok・ニコニコのコメントはAI自動解析（貼り付け → 一括記録）に対応しています。</p>
     </div>
     <div class="faq-item">
       <h4>スマホでも使えますか？</h4>
-      <p>はい、スマホブラウザに対応しています。Chrome拡張割引はPCで一度認証すればスマホでも引き続き適用されます。</p>
+      <p>はい、スマホブラウザに完全対応しています。Chrome拡張割引はPCで一度認証すればスマホでも継続適用されます。</p>
+    </div>
+    <div class="faq-item">
+      <h4>決済はどのように行いますか？</h4>
+      <p>Stripe（クレジットカード決済）に対応しています。設定タブからプランを選んでStripeの安全な決済ページで手続きできます。プランの変更・解約もStripeカスタマーポータルから簡単にできます。</p>
     </div>
     <div class="faq-item">
       <h4>フリープランからいつでもアップグレードできますか？</h4>
-      <p>はい、設定タブからいつでもプランを変更できます（Stripe決済実装後）。現在のオープンベータ期間中はすべての機能を無料でお試しいただけます。</p>
+      <p>はい、設定タブからいつでもプランを変更できます。アップグレードは即座に反映されます。</p>
     </div>
     <div class="faq-item">
       <h4>Chrome拡張とは何ですか？</h4>
-      <p>将来リリース予定のChrome拡張をインストールすると、コメントの自動キャプチャが可能になります。また、インストールするだけで月額割引が適用されます。PCで一度認証すればスマホでも割引が継続します。</p>
+      <p>将来リリース予定のChrome拡張をインストールすると、コメントの自動キャプチャが可能になります。インストールするだけで月額割引も適用されます。PCで一度認証すればスマホでも割引が継続します。</p>
     </div>
     <div class="faq-item">
-      <h4>推しのチャンネルが複数プラットフォームにまたがっていても大丈夫？</h4>
-      <p>はい。同じ推しのYouTubeチャンネルとTwitchチャンネルをそれぞれ「推し」として登録できます。それぞれに推し歴・ログ・コメント履歴を別々に管理できます。</p>
+      <h4>推し活ログや応援レターに不適切な言葉は使えますか？</h4>
+      <p>CheerDeskには不適切言葉フィルターを実装しています。NGワードが含まれる場合は送信がブロックされます。健全なファン活動をサポートします。</p>
     </div>
     <div class="faq-item">
       <h4>データは安全ですか？</h4>
-      <p>Supabase（PostgreSQL）にRLS（行レベルセキュリティ）を適用しており、自分のデータには自分しかアクセスできません。パスワード等の認証情報はSupabase Authで安全に管理されます。</p>
+      <p>Supabase（PostgreSQL）にRLS（行レベルセキュリティ）を適用しており、自分のデータには自分しかアクセスできません。決済はStripeが処理するためカード情報はCheerDeskのサーバーには保存されません。</p>
     </div>
     <div class="faq-item">
       <h4>OpsDesk との違いは？</h4>
@@ -607,7 +582,6 @@ footer .copy{font-size:12px;color:var(--dim);}
   </div>
 </section>
 
-<!-- 運営者情報 -->
 <section id="legal">
   <div class="wrap legal">
     <div class="eyebrow">LEGAL</div>
@@ -616,18 +590,18 @@ footer .copy{font-size:12px;color:var(--dim);}
       <tr><td>サービス名</td><td>CheerDesk</td></tr>
       <tr><td>運営者</td><td>Ringnote</td></tr>
       <tr><td>お問い合わせ</td><td><a href="https://x.com/OpsDesk_Officia" target="_blank" rel="noopener">X(@OpsDesk_Officia)</a></td></tr>
+      <tr><td>決済</td><td>Stripe（クレジットカード決済）</td></tr>
       <tr><td>関連サービス</td><td><a href="https://opsdesk.rinrinnue1214.workers.dev/" target="_blank" rel="noopener">OpsDesk</a>（活動者向け姉妹アプリ）</td></tr>
     </table>
     <h3>利用規約</h3>
     <p>本サービスは個人利用を目的としたVTuber・配信者ファン向けツールです。不正利用・スパム行為・不適切なコンテンツの投稿は禁止します。サービスは予告なく変更・終了する場合があります。</p>
     <h3>プライバシーポリシー</h3>
-    <p>取得する情報はメールアドレス・表示名・推し活記録データのみです。第三者への販売は行いません。データはSupabaseのサーバーに保存されます。アカウント削除により全データを削除できます。</p>
+    <p>取得する情報はメールアドレス・表示名・推し活記録データのみです。第三者への販売は行いません。データはSupabaseのサーバーに保存されます。アカウント削除により全データを削除できます。決済情報はStripeが管理し、CheerDeskのサーバーにはカード情報は保存されません。</p>
     <h3>返金ポリシー</h3>
     <p>有料プランの月額料金は原則返金不可ですが、システム障害等により著しくサービスが利用できなかった場合は個別にご相談ください。</p>
   </div>
 </section>
 
-<!-- CTA BANNER -->
 <div class="wrap">
   <div class="cta-banner">
     <h2>推しを、もっと近くに。</h2>
