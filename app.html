@@ -1945,14 +1945,19 @@ async function fetchSchedTitle(){
       const data=await res.json();
       if(data.title){
         document.getElementById('schedTitle').value=data.title;
-        // 配信か動画かを自動判定
-        if(data.isLive)document.getElementById('schedType').value='live';
+        // 配信・アーカイブ・動画を自動判定
+        if(data.isLive) document.getElementById('schedType').value='live';
+        else if(data.isArchive) document.getElementById('schedType').value='live';
         else document.getElementById('schedType').value='video';
-        if(data.scheduledStart){
-          const dt=new Date(data.scheduledStart);
+        // 開始時刻をJSTで設定（actualStart優先 → scheduledStart）
+        const startTime=data.actualStart||data.scheduledStart;
+        if(startTime){
+          // UTC→JSTに変換してdatetime-localに設定
+          const dt=new Date(new Date(startTime).getTime()+9*60*60*1000);
           document.getElementById('schedStartsAt').value=dt.toISOString().slice(0,16);
         }
-        toast('✓ タイトルを取得しました');
+        const typeLabel=data.isArchive?'アーカイブ':data.isLive?'配信':'動画';
+        toast(`✓ ${typeLabel}情報を取得しました${startTime?'（開始時刻も自動入力）':''}`);
       } else toast('タイトルを取得できませんでした');
     } else if(twMatch){
       document.getElementById('schedTitle').value=`${twMatch[1]} の配信`;
@@ -1965,8 +1970,14 @@ async function fetchSchedTitle(){
         body:JSON.stringify({platform:'niconico',id:nicoMatch[1]})
       });
       const data=await res.json();
-      if(data.title){document.getElementById('schedTitle').value=data.title;toast('✓ タイトルを取得しました');}
-      else toast('タイトルを取得できませんでした');
+      if(data.title){
+        document.getElementById('schedTitle').value=data.title;
+        if(data.scheduledStart){
+          const dt=new Date(new Date(data.scheduledStart).getTime()+9*60*60*1000);
+          document.getElementById('schedStartsAt').value=dt.toISOString().slice(0,16);
+        }
+        toast('✓ タイトルを取得しました'+(data.scheduledStart?'（開始時刻も自動入力）':''));
+      } else toast('タイトルを取得できませんでした');
     } else {
       // 汎用タイトル取得（OGP）
       const res=await fetch(WORKER_URL+'/api/fetch-title',{
