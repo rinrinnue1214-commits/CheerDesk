@@ -1519,7 +1519,7 @@ async function sendCheerMessage(){
 // ── ベータ期間設定 ──
 const BETA_END=new Date('2026-07-31T23:59:59+09:00');
 const IS_BETA=new Date()<BETA_END;
-const BETA_PLAN='standard'; // ベータ中は全員スタンダード相当
+const BETA_PLAN='premium'; // ベータ中は全員プレミアム相当
 
 // ── 実効プランを取得（ベータ中は底上げ）──
 function effectivePlan(plan){
