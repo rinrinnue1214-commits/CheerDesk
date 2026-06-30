@@ -693,6 +693,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
       </div>
       <label>プラットフォーム</label>
       <select id="pasteplatform" style="margin-bottom:10px;">
+        <option value="youtube">YouTube</option>
+        <option value="twitch">Twitch</option>
         <option value="tiktok">TikTok</option>
         <option value="niconico">ニコニコ生放送</option>
         <option value="other">その他</option>
@@ -1121,8 +1123,9 @@ function renderChannelList(){
     const ch=uc.channels;
     const days=calcDays(uc.followed_since);
     const icon=(uc.memo?.startsWith('emoji:')?uc.memo.slice(6):null)||pfIcon(ch.platform);
+    const pColor=pfColor(ch.platform);
     return`<div class="ch-card" onclick="openChDetail('${uc.id}')">
-      <div class="ch-avatar-placeholder">${icon}</div>
+      <div class="ch-avatar-placeholder" style="border-color:${pColor}33;color:${pColor};">${icon}</div>
       <div class="ch-info">
         <div class="ch-name">${esc(ch.name)}${ch.is_live?'<span class="ch-live">● LIVE</span>':''}</div>
         <div class="ch-meta">${ch.platform}${days!==null?' · 推し歴'+days+'日':''}</div>
@@ -1894,7 +1897,8 @@ function toast(msg){
 }
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function pfIcon(p){return{youtube:'▶',twitch:'🎮',tiktok:'🎵',niconico:'ⓝ'}[p]||'📺';}
+function pfIcon(p){return{youtube:'▶',twitch:'🎮',tiktok:'🎵',niconico:'ⓝ',other:'🔗'}[p]||'📺';}
+function pfColor(p){return{youtube:'#FF6B5B',twitch:'#9B8AFB',tiktok:'#E0629E',niconico:'#45D6B0',other:'#8C8FA3'}[p]||'#8C8FA3';}
 function tierLbl(t){return{oshi:'⭐ 推し',watch:'👁 ウォッチ',know:'📌 知っている'}[t]||t;}
 function liIcon(t){return{watch:'🎮',goods:'🛍',superchat:'💰',event:'🎪',other:'📌'}[t]||'📌';}
 function liLbl(t){return{watch:'配信を視聴',goods:'グッズ購入',superchat:'投げ銭',event:'イベント参加',other:'その他'}[t]||t;}
@@ -1980,8 +1984,10 @@ async function fetchSchedTitle(){
   try{
     // YouTube動画IDを抽出してタイトルを取得
     const ytMatch=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/live\/)([A-Za-z0-9_-]{11})/);
-    const twMatch=url.match(/twitch\.tv\/([^/?]+)/);
+    const twMatch=url.match(/twitch\.tv\/([^/?#\s]+)/);
     const nicoMatch=url.match(/nicovideo\.jp\/watch\/((?:sm|nm|so|lv)\d+)/);
+    const nicoLiveMatch=url.match(/live\.nicovideo\.jp\/watch\/(lv\d+)/);
+    const tiktokMatch=url.match(/tiktok\.com\/@([^/]+)\/video\/(\d+)/);
 
     if(ytMatch){
       const res=await fetch(WORKER_URL+'/api/fetch-title',{
@@ -2006,10 +2012,37 @@ async function fetchSchedTitle(){
         toast(`✓ ${typeLabel}情報を取得しました${startTime?'（開始時刻も自動入力）':'（開始時刻は手動入力してください）'}`);
       } else toast('タイトルを取得できませんでした');
     } else if(twMatch){
-      document.getElementById('schedTitle').value=`${twMatch[1]} の配信`;
+      // Twitch: チャンネル名を自動入力
+      const chName=twMatch[1];
+      document.getElementById('schedTitle').value=`${chName} の配信`;
       document.getElementById('schedType').value='live';
-      toast('✓ Twitchの配信として設定しました');
+      // 登録済みチャンネルと照合して自動選択
+      const matched=AChans.find(c=>c.channels?.platform==='twitch'&&
+        c.channels?.platform_channel_id?.toLowerCase()===chName.toLowerCase());
+      if(matched){
+        const sel=document.getElementById('schedChannel');
+        if(sel)sel.value=matched.channel_id;
+      }
+      toast(`✓ Twitchチャンネル「${chName}」を設定しました（開始時刻は手動入力してください）`);
+    } else if(nicoLiveMatch){
+      // ニコニコ生放送URL
+      const res=await fetch(WORKER_URL+'/api/fetch-title',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({platform:'niconico',id:nicoLiveMatch[1]})
+      });
+      const data=await res.json();
+      if(data.title){
+        document.getElementById('schedTitle').value=data.title;
+        document.getElementById('schedType').value='live';
+        if(data.scheduledStart){
+          const dt=new Date(new Date(data.scheduledStart).getTime()+9*60*60*1000);
+          document.getElementById('schedStartsAt').value=dt.toISOString().slice(0,16);
+        }
+        toast('✓ ニコニコ生放送情報を取得しました'+(data.scheduledStart?'（開始時刻も自動入力）':''));
+      } else toast('タイトルを取得できませんでした');
     } else if(nicoMatch){
+      // ニコニコ動画URL
       const res=await fetch(WORKER_URL+'/api/fetch-title',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
@@ -2024,6 +2057,23 @@ async function fetchSchedTitle(){
         }
         toast('✓ タイトルを取得しました'+(data.scheduledStart?'（開始時刻も自動入力）':''));
       } else toast('タイトルを取得できませんでした');
+    } else if(tiktokMatch){
+      // TikTok動画URL
+      const res=await fetch(WORKER_URL+'/api/fetch-title',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({platform:'other',url})
+      });
+      const data=await res.json();
+      if(data.title){
+        document.getElementById('schedTitle').value=data.title;
+        document.getElementById('schedType').value='video';
+        toast('✓ TikTok動画情報を取得しました');
+      } else {
+        document.getElementById('schedTitle').value=`@${tiktokMatch[1]} の動画`;
+        document.getElementById('schedType').value='video';
+        toast('✓ TikTok動画として設定しました');
+      }
     } else {
       // 汎用タイトル取得（OGP）
       const res=await fetch(WORKER_URL+'/api/fetch-title',{
