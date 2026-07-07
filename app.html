@@ -1517,7 +1517,7 @@ async function sendCheerMessage(){
 }
 
 // ── ベータ期間設定 ──
-const BETA_END=new Date('2026-07-31T23:59:59+09:00');
+const BETA_END=new Date('2026-09-30T23:59:59+09:00');
 const IS_BETA=new Date()<BETA_END;
 const BETA_PLAN='premium'; // ベータ中は全員プレミアム相当
 
@@ -1537,7 +1537,7 @@ function updatePlanUI(ud){
   const effPlan=effectivePlan(basePlan);
   const betaBadge=IS_BETA?`<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(224,98,158,.15);color:var(--pink);border:1px solid rgba(224,98,158,.3);font-family:'IBM Plex Mono',monospace;">BETA FREE</span>`:'';
   if(pi)pi.innerHTML=`
-    ${IS_BETA?`<div style="background:rgba(224,98,158,.07);border:1px solid rgba(224,98,158,.2);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--pink);">🎉 オープンベータ期間中（〜7月末）は<b>全機能を無料</b>でお試しいただけます！</div>`:''}
+    ${IS_BETA?`<div style="background:rgba(224,98,158,.07);border:1px solid rgba(224,98,158,.2);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--pink);">🎉 オープンベータ期間中（〜9月末）は<b>全機能を無料</b>でお試しいただけます！</div>`:''}
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <span style="font-size:15px;font-weight:600;">${pn[basePlan]}</span>
       ${betaBadge}
@@ -1705,7 +1705,7 @@ async function generateShareImage(ucId){
   const now=new Date();
   ctx.fillText('CheerDesk · '+now.getFullYear()+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0'),70,375);
   ctx.fillStyle='#E0629E';ctx.font='700 13px Space Grotesk, sans-serif';
-  ctx.fillText('cheerdesk.pages.dev',580,375);
+  ctx.fillText('cheerdesk.ringnote.jp',580,375);
 
   // ダウンロード
   const a=document.createElement('a');
