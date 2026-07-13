@@ -5,9 +5,9 @@
 <meta name="google" content="notranslate">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CheerDesk — 推しを、もっと近くに。</title>
-<meta name="description" content="VTuber・配信者のファン向け推し活管理ツール。推し歴・推し活ログ・コメント履歴・応援スタンプ・ファンカード生成をひとつのアプリで。">
+<meta name="description" content="VTuber・配信者のファン向け推し活管理ツール。推し歴・推し活ログ・コメント記録・ファンカード生成・配信通知をひとつのアプリで。">
 <meta property="og:title" content="CheerDesk — 推しを、もっと近くに。">
-<meta property="og:description" content="推し歴・推し活ログ・コメント履歴・応援をひとつのアプリで管理。ファンカードでXにシェアしよう。">
+<meta property="og:description" content="推し歴・推し活ログ・コメント記録・ファンカード生成をひとつのアプリで管理。配信通知でLIVEを見逃さない。">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -335,8 +335,7 @@ footer .copy{font-size:12px;color:var(--dim);}
           <div class="icon">📝</div>
           <h3>推し活ログで記録を積み上げる</h3>
           <p>配信視聴・グッズ購入・スパチャ・イベント参加など、推し活のすべてを記録。月次の集計・年間費用グラフで推し活の歩みを振り返れます。記念日（推し歴1ヶ月・100日・1周年）は自動でバナー表示。推し活スコア・ランクで今月の活動を可視化。</p>
-          <span class="feat-tag std">スタンダード以上</span>
-          <span class="feat-tag prm">年間グラフはプレミアム</span>
+          <span class="feat-tag prm">プレミアム</span>
         </div>
         <div class="feat-visual">
           <div style="background:var(--panel);padding:16px;">
@@ -370,8 +369,8 @@ footer .copy{font-size:12px;color:var(--dim);}
       <div class="feat-row">
         <div class="feat-text">
           <div class="icon">📣</div>
-          <h3>応援・ファンカードで存在をアピール</h3>
-          <p>8種類の応援スタンプで気持ちを記録。応援レターで推しへのメッセージを残せます。推し活実績をファンカードにしてXにシェア。Canvas APIでカード画像を生成してダウンロードもできます。不適切な言葉は自動フィルタリング。</p>
+          <h3>応援記録・ファンカードで推し活を可視化</h3>
+          <p>8種類の応援スタンプと推し活メモで「今日の推し活」を日記のように記録。推し活実績をファンカードにしてXでシェアできます。Canvas APIでカード画像を生成してダウンロードも可能。</p>
           <span class="feat-tag">全プラン</span>
         </div>
         <div class="feat-visual">
@@ -414,8 +413,8 @@ footer .copy{font-size:12px;color:var(--dim);}
       </div>
       <div class="mini-feat">
         <div class="icon">💬</div>
-        <h4>コメント履歴</h4>
-        <p>推しへのコメント・スパチャを記録。初コメントは自動で記念日として検出。TikTok・ニコニコはAI自動解析。</p>
+        <h4>コメント記録</h4>
+        <p>推しへ送ったコメントを動画をまたいで記録。読まれた時刻・メモも残せます。スパチャ・課金も同じ画面で一元管理。</p>
         <span class="tag" style="background:rgba(242,184,75,.1);color:var(--gold);border:1px solid rgba(242,184,75,.25);">プレミアム</span>
       </div>
       <div class="mini-feat">
@@ -453,8 +452,8 @@ footer .copy{font-size:12px;color:var(--dim);}
       <div class="tier-card" style="border-color:var(--pink);">
         <div class="tier-badge" style="background:rgba(224,98,158,.12);color:var(--pink);border:1px solid rgba(224,98,158,.3);">⭐ 推し</div>
         <h4>フル機能・全通知</h4>
-        <p>配信通知・推し活ログ・コメント履歴・応援スタンプ・ファンカード生成。推し歴カウンター・記念日バナー・絵文字アイコン設定も。</p>
-        <div class="tier-limit" style="color:var(--pink);">フリー: 1人 / Std: 5人 / Prm: 無制限</div>
+        <p>配信通知・推し活ログ・コメント記録・応援スタンプ・ファンカード生成。推し歴カウンター・記念日バナー・絵文字アイコン設定も。</p>
+        <div class="tier-limit" style="color:var(--pink);">フリー: 3人 / プレミアム: 無制限</div>
       </div>
       <div class="tier-card">
         <div class="tier-badge" style="background:rgba(91,157,239,.1);color:var(--blue);border:1px solid rgba(91,157,239,.25);">👁 ウォッチ</div>
@@ -476,61 +475,57 @@ footer .copy{font-size:12px;color:var(--dim);}
   <div class="wrap">
     <div class="eyebrow">PRICING</div>
     <h2 class="sec-title">シンプルな料金体系。</h2>
-    <p class="sec-lead">フリープランは永久無料。Chrome拡張インストールと年払いで最大割引が適用されます。Stripe決済対応済み。</p>
+    <p class="sec-lead">フリープランは永久無料。年払いとChrome拡張でプレミアムが最安¥980/月まで割引されます。Stripe決済対応済み。</p>
     <div class="price-grid">
       <div class="price-card">
         <div class="price-name">フリー</div>
         <div class="price-amount">¥0</div>
-        <div class="price-note" style="color:var(--dim);">永久無料</div>
+        <div class="price-note" style="color:var(--dim);">永久無料（広告あり）</div>
         <ul>
-          <li>推し登録 1人 · ウォッチ無制限</li>
+          <li>推し登録 3人 · ウォッチ無制限</li>
           <li>スケジュール管理</li>
-          <li>応援スタンプ（月3回）</li>
+          <li>応援スタンプ・推し活メモ</li>
           <li>ファンカード生成・画像保存</li>
           <li>プロフィールページ</li>
-          <li>オンボーディング・ガイド</li>
-          <li class="no" style="color:var(--dim);">推し活ログ</li>
-          <li class="no" style="color:var(--dim);">コメント履歴・AI解析</li>
+          <li class="no" style="color:var(--dim);">推し活ログ・コメント記録</li>
+          <li class="no" style="color:var(--dim);">年間グラフ・PDF出力</li>
         </ul>
         <a class="price-cta" href="/app.html">無料で始める</a>
       </div>
-      <div class="price-card featured">
-        <div class="price-name">スタンダード</div>
-        <div class="price-amount">¥780<span>/月〜</span></div>
-        <div class="price-note">年払い+拡張で ¥480/月</div>
+      <div class="price-card">
+        <div class="price-name">広告削除</div>
+        <div class="price-amount">¥120<span>/月</span></div>
+        <div class="price-note" style="color:var(--dim);">フリーの全機能＋広告非表示</div>
         <ul>
-          <li>推し登録 5人 · ウォッチ無制限</li>
-          <li>推し活ログ・費用記録・削除</li>
-          <li>応援スタンプ 無制限</li>
-          <li>推し活スコア・ランク</li>
-          <li>今月のサマリー自動生成</li>
-          <li>チャンネルソート・絵文字アイコン</li>
-          <li class="no" style="color:var(--dim);">コメント履歴・AI解析</li>
+          <li>フリーの全機能</li>
+          <li>広告非表示</li>
+          <li class="no" style="color:var(--dim);">推し活ログ・コメント記録</li>
           <li class="no" style="color:var(--dim);">年間グラフ・PDF出力</li>
         </ul>
         <a class="price-cta" href="/app.html">始める</a>
       </div>
-      <div class="price-card">
+      <div class="price-card featured">
         <div class="price-name">プレミアム</div>
         <div class="price-amount">¥1,580<span>/月〜</span></div>
         <div class="price-note">年払い+拡張で ¥980/月</div>
         <ul>
           <li>推し登録 無制限</li>
-          <li>スタンダードの全機能</li>
-          <li>コメント履歴・スパチャ記録</li>
-          <li>AIコメント自動解析（TikTok・ニコニコ）</li>
+          <li>広告なし</li>
+          <li>推し活ログ（視聴・コメント・課金・グッズ）</li>
+          <li>コメント記録（読まれた時刻・メモ）</li>
+          <li>スパチャ・課金記録</li>
           <li>年間費用グラフ</li>
           <li>推し活レポートPDF出力</li>
+          <li>Chrome拡張割引 ¥100引き</li>
         </ul>
         <a class="price-cta" href="/app.html">始める</a>
       </div>
     </div>
     <div class="discount-box" style="margin-top:24px;">
       <h4>💡 割引の仕組み</h4>
-      <div class="discount-row"><span class="key">年払い割引</span><span class="val">Std ¥200引き / Prm ¥300引き</span></div>
-      <div class="discount-row"><span class="key">Chrome拡張割引（準備中）</span><span class="val">Std ¥100引き / Prm ¥300引き</span></div>
-      <div class="discount-row"><span class="key">両方適用（最安値）</span><span class="val">Std ¥480/月 · Prm ¥980/月</span></div>
-      <div class="discount-row"><span class="key">拡張割引の維持</span><span class="val">PCで一度認証すればスマホでも有効。明示的に解除するまで継続。</span></div>
+      <div class="discount-row"><span class="key">年払い割引</span><span class="val">¥300引き（¥1,280/月）</span></div>
+      <div class="discount-row"><span class="key">Chrome拡張割引</span><span class="val">¥100引き（プレミアムのみ）</span></div>
+      <div class="discount-row"><span class="key">両方適用（最安値）</span><span class="val">¥980/月</span></div>
     </div>
     <div class="opsdesk-banner">
       <div class="opsdesk-banner-text">
@@ -593,7 +588,7 @@ footer .copy{font-size:12px;color:var(--dim);}
       <tr><td>メールアドレス</td><td>cheerdesk@ringnote.jp</td></tr>
       <tr><td>サービス名</td><td>CheerDesk</td></tr>
       <tr><td>販売URL</td><td>https://cheerdesk.ringnote.jp</td></tr>
-      <tr><td>販売価格</td><td>スタンダードプラン：¥780/月（税込）または¥580/月（年払い）<br>プレミアムプラン：¥1,580/月（税込）または¥1,280/月（年払い）<br>Chrome拡張インストールにより各¥100/月割引あり</td></tr>
+      <tr><td>販売価格</td><td>フリープラン：¥0（永久無料）<br>広告削除プラン：¥120/月（税込）<br>プレミアムプラン：¥1,580/月（税込）または¥1,280/月（年払い）<br>Chrome拡張インストールによりプレミアム¥100/月割引あり</td></tr>
       <tr><td>支払方法</td><td>クレジットカード（Visa・Mastercard・JCB・American Express）</td></tr>
       <tr><td>支払時期</td><td>月払い：毎月自動更新　年払い：年1回自動更新</td></tr>
       <tr><td>サービス提供時期</td><td>決済完了後すぐに有料プランが有効になります</td></tr>

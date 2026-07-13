@@ -106,20 +106,19 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
 .log-item:last-child{border-bottom:none;}
 .log-type-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
 .log-type-icon.watch{background:rgba(69,214,176,.12);}
-.log-type-icon.goods{background:rgba(242,184,75,.12);}
-.log-type-icon.superchat{background:rgba(255,107,91,.12);}
-.log-type-icon.event{background:rgba(155,138,251,.12);}
-.log-type-icon.other{background:var(--panel2);}
 .log-type-icon.comment{background:rgba(224,98,158,.12);}
-.log-type-icon.memo{background:var(--panel2);}
-.log-info{flex:1;}
-.log-title{font-size:12.5px;font-weight:500;margin-bottom:1px;}
+.log-type-icon.goods{background:rgba(242,184,75,.12);}
+.log-type-icon.superchat,.log-type-icon.bits,.log-type-icon.gift,.log-type-icon.membership,.log-type-icon.fanclub{background:rgba(255,107,91,.12);}
+.log-type-icon.event{background:rgba(155,138,251,.12);}
+.log-type-icon.memo,.log-type-icon.other{background:var(--panel2);}
+.log-info{flex:1;min-width:0;}
+.log-title{font-size:12.5px;font-weight:500;margin-bottom:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.log-meta{font-size:10.5px;color:var(--dim);font-family:'IBM Plex Mono',monospace;}
+.log-amount{font-size:12px;color:var(--gold);font-family:'IBM Plex Mono',monospace;white-space:nowrap;}
 .log-tab{background:var(--panel);border:1px solid var(--border);color:var(--dim);border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;white-space:nowrap;transition:all .15s;}
 .log-tab.active{background:var(--pink);border-color:var(--pink);color:#fff;}
 .log-tab:hover:not(.active){color:var(--text);border-color:#3A3D4E;}
 .read-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 6px;border-radius:10px;background:rgba(69,214,176,.12);color:var(--calm);margin-top:3px;}
-.log-meta{font-size:10.5px;color:var(--dim);font-family:'IBM Plex Mono',monospace;}
-.log-amount{font-size:12px;color:var(--gold);font-family:'IBM Plex Mono',monospace;white-space:nowrap;}
 .comment-card{background:var(--panel2);border-radius:10px;padding:11px 13px;margin-bottom:6px;}
 .comment-card .cc-video{font-size:10.5px;color:var(--dim);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;}
 .comment-card .cc-text{font-size:13px;line-height:1.55;}
@@ -231,7 +230,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <button data-tab="channels" onclick="switchTab('channels')"><span class="ni">⭐</span>推しリスト</button>
     <button data-tab="schedule" onclick="switchTab('schedule')"><span class="ni">📅</span>スケジュール</button>
     <button data-tab="logs" onclick="switchTab('logs')"><span class="ni">📝</span>推し活ログ</button>
-    <button data-tab="comments" onclick="switchTab('comments')"><span class="ni">💬</span>コメント</button>
     <button data-tab="cheer" onclick="switchTab('cheer')"><span class="ni">📓</span>応援記録</button>
     <button data-tab="settings" onclick="switchTab('settings')"><span class="ni">⚙️</span>設定</button>
   </nav>
@@ -357,35 +355,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
   <div id="logList"><div class="empty"><div class="empty-icon">📝</div>まだログがありません</div></div>
 </div>
 
-<!-- コメント -->
-<div class="panel-view" id="panel-comments">
-  <div class="page-header">
-    <div class="page-title">コメント履歴</div>
-    <button class="ghost sm" onclick="openAddCommentModal()">＋ 手動記録</button>
-  </div>
-  <div id="commentPremiumGate" style="display:none;">
-    <div class="plan-gate">
-      <div class="pg-icon">💬</div>
-      <p>コメント履歴はプレミアムプランの機能です。<br>自分のコメントを自動で記録できます。</p>
-      <button class="primary" onclick="switchTab('settings')">プランを確認する</button>
-    </div>
-  </div>
-  <div id="commentContent">
-    <div class="card">
-      <div class="card-hd">統計</div>
-      <div class="stat-row">
-        <div class="stat"><div class="num" id="commentTotalCount" style="color:var(--calm);">0</div><div class="lbl">総コメント数</div></div>
-        <div class="stat"><div class="num" id="commentSuperTotal" style="color:var(--gold);">¥0</div><div class="lbl">スパチャ合計</div></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-hd">コメント年表
-        <select id="commentFilterChannel" onchange="loadComments()" style="width:auto;min-height:auto;padding:4px 8px;font-size:11px;margin:0;"></select>
-      </div>
-      <div id="commentList"><div class="empty"><div class="empty-icon">💬</div>コメント履歴がありません</div></div>
-    </div>
-  </div>
-</div>
+<!-- コメントパネルは推し活ログに統合済み -->
+<div class="panel-view" id="panel-comments" style="display:none;"></div>
 
 <!-- 応援 -->
 <div class="panel-view" id="panel-cheer">
@@ -419,10 +390,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
   <div class="card">
     <div class="card-hd">推し活メモ <span style="font-size:11px;color:var(--dim);">自分だけの記録</span></div>
     <textarea id="cheerMessage" placeholder="今日の推し活の感想・気持ちを書いてみましょう...&#10;（これはあなただけが見る記録です）" style="min-height:100px;margin-bottom:8px;"></textarea>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-      <input type="checkbox" id="cheerAnon" style="width:auto;min-height:auto;margin:0;accent-color:var(--pink);">
-      <label for="cheerAnon" style="margin:0;font-size:12px;">匿名として記録する</label>
-    </div>
     <button class="primary full" onclick="sendCheerMessage()">記録する 📓</button>
   </div>
   <div class="card">
@@ -439,10 +406,15 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
   <div class="card">
     <div class="card-hd">プロフィール</div>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-      <div id="settingsAvatar" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--purple));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">👤</div>
+      <div style="position:relative;flex-shrink:0;">
+        <div id="settingsAvatar" style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--purple));display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden;cursor:pointer;" onclick="document.getElementById('avatarInput').click()">👤</div>
+        <div style="position:absolute;bottom:0;right:0;width:18px;height:18px;background:var(--pink);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;pointer-events:none;">✏️</div>
+        <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
+      </div>
       <div style="flex:1;">
         <div id="settingsDisplayName" style="font-size:15px;font-weight:600;margin-bottom:2px;">読込中...</div>
         <div id="settingsEmail" style="font-size:12px;color:var(--dim);"></div>
+        <div style="font-size:11px;color:var(--dim);margin-top:2px;">アイコンをタップして画像を変更</div>
       </div>
     </div>
     <label>表示名</label>
@@ -485,12 +457,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
       <div style="font-size:12px;color:var(--dim);margin-bottom:10px;">プランをアップグレードして推し活をもっと楽しもう。</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
         <div style="background:var(--panel2);border:1px solid var(--calm);border-radius:10px;padding:12px;">
-          <div style="font-size:11px;color:var(--calm);font-weight:600;margin-bottom:4px;">スタンダード</div>
-          <div style="font-size:18px;font-weight:600;font-family:'IBM Plex Mono',monospace;">¥780<span style="font-size:11px;color:var(--dim);">/月</span></div>
-          <div style="font-size:10px;color:var(--dim);margin-bottom:8px;">年払いで¥580/月</div>
+          <div style="font-size:11px;color:var(--calm);font-weight:600;margin-bottom:4px;">広告削除</div>
+          <div style="font-size:18px;font-weight:600;font-family:'IBM Plex Mono',monospace;">¥120<span style="font-size:11px;color:var(--dim);">/月</span></div>
+          <div style="font-size:10px;color:var(--dim);margin-bottom:8px;">広告を非表示にするだけ</div>
           <div style="display:flex;gap:4px;flex-direction:column;">
-            <button class="primary" style="font-size:12px;padding:8px;width:100%;" onclick="startCheckout('standard','monthly')">月払いで始める</button>
-            <button class="ghost sm" style="width:100%;font-size:11px;" onclick="startCheckout('standard','annual')">年払い（¥6,960）</button>
+            <button class="primary" style="font-size:12px;padding:8px;width:100%;background:var(--calm);color:#0D1A16;" onclick="startCheckout('ad_free','monthly')">月払いで始める</button>
           </div>
         </div>
         <div style="background:var(--panel2);border:1px solid var(--gold);border-radius:10px;padding:12px;position:relative;">
@@ -518,15 +489,16 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
         <tr>
           <th style="text-align:left;padding:6px 4px;color:var(--dim);border-bottom:1px solid var(--border);">機能</th>
           <th style="text-align:center;padding:6px 4px;color:var(--dim);border-bottom:1px solid var(--border);">フリー</th>
-          <th style="text-align:center;padding:6px 4px;color:var(--calm);border-bottom:1px solid var(--border);">Std</th>
+          <th style="text-align:center;padding:6px 4px;color:var(--calm);border-bottom:1px solid var(--border);">広告削除</th>
           <th style="text-align:center;padding:6px 4px;color:var(--gold);border-bottom:1px solid var(--border);">Prm</th>
         </tr>
-        <tr><td style="padding:5px 4px;color:var(--dim2);">推し登録</td><td style="text-align:center;color:var(--dim);">1人</td><td style="text-align:center;color:var(--calm);">5人</td><td style="text-align:center;color:var(--gold);">無制限</td></tr>
-        <tr style="background:var(--panel2);"><td style="padding:5px 4px;color:var(--dim2);">推し活ログ</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--calm);">✓</td><td style="text-align:center;color:var(--gold);">✓</td></tr>
-        <tr><td style="padding:5px 4px;color:var(--dim2);">コメント履歴</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--gold);">✓</td></tr>
-        <tr style="background:var(--panel2);"><td style="padding:5px 4px;color:var(--dim2);">年間グラフ</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--gold);">✓</td></tr>
-        <tr><td style="padding:5px 4px;color:var(--dim2);">PDF出力</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--gold);">✓</td></tr>
-        <tr style="background:var(--panel2);"><td style="padding:5px 4px;color:var(--dim2);">応援スタンプ</td><td style="text-align:center;color:var(--dim);">月3回</td><td style="text-align:center;color:var(--calm);">無制限</td><td style="text-align:center;color:var(--gold);">無制限</td></tr>
+        <tr><td style="padding:5px 4px;color:var(--dim2);">推し登録</td><td style="text-align:center;color:var(--dim);">3人</td><td style="text-align:center;color:var(--calm);">3人</td><td style="text-align:center;color:var(--gold);">無制限</td></tr>
+        <tr style="background:var(--panel2);"><td style="padding:5px 4px;color:var(--dim2);">広告</td><td style="text-align:center;color:var(--dim);">あり</td><td style="text-align:center;color:var(--calm);">なし</td><td style="text-align:center;color:var(--gold);">なし</td></tr>
+        <tr><td style="padding:5px 4px;color:var(--dim2);">推し活ログ</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--gold);">✓</td></tr>
+        <tr style="background:var(--panel2);"><td style="padding:5px 4px;color:var(--dim2);">コメント記録</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--gold);">✓</td></tr>
+        <tr><td style="padding:5px 4px;color:var(--dim2);">年間グラフ</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--gold);">✓</td></tr>
+        <tr style="background:var(--panel2);"><td style="padding:5px 4px;color:var(--dim2);">PDF出力</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--dim);">✗</td><td style="text-align:center;color:var(--gold);">✓</td></tr>
+        <tr><td style="padding:5px 4px;color:var(--dim2);">応援スタンプ</td><td style="text-align:center;color:var(--dim);">無制限</td><td style="text-align:center;color:var(--calm);">無制限</td><td style="text-align:center;color:var(--gold);">無制限</td></tr>
       </table>
     </div>
   </div>
@@ -643,6 +615,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
   </div>
 </div>
 
+<!-- モーダル：推し活ログ追加 -->
 <!-- モーダル：視聴・コメント記録 -->
 <div class="modal-overlay" id="addWatchModal">
   <div class="modal-box">
@@ -652,7 +625,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <select id="watchChannel"></select>
     <label>動画・配信URL（任意）</label>
     <div style="display:flex;gap:6px;margin-bottom:10px;">
-      <input type="text" id="watchUrl" placeholder="https://youtube.com/watch?v=..." style="flex:1;margin:0;" oninput="onWatchUrlInput(this.value)">
+      <input type="text" id="watchUrl" placeholder="https://youtube.com/watch?v=..." style="flex:1;margin:0;">
       <button class="ghost sm" onclick="fetchWatchTitle()" style="white-space:nowrap;flex-shrink:0;padding:10px 12px;">取得</button>
     </div>
     <label>動画・配信タイトル</label>
@@ -758,7 +731,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
 <!-- コメント行テンプレ（非表示） -->
 <template id="commentRowTpl">
   <div class="comment-row" style="background:var(--panel2);border-radius:8px;padding:10px;margin-bottom:8px;">
-    <textarea class="comment-text" placeholder="送ったコメント内容" style="min-height:60px;margin-bottom:6px;font-size:13px;"></textarea>
+    <textarea class="comment-text" placeholder="送ったコメント内容" style="min-height:60px;margin-bottom:6px;font-size:13px;width:100%;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px;box-sizing:border-box;"></textarea>
     <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;">
       <input type="text" class="comment-sent-at" placeholder="送信時刻 例:21:34" style="flex:1;margin:0;font-size:12px;">
       <label style="display:flex;align-items:center;gap:4px;font-size:12px;margin:0;white-space:nowrap;cursor:pointer;">
@@ -770,71 +743,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <button onclick="this.closest('.comment-row').remove()" style="background:none;border:none;color:var(--dim);font-size:12px;cursor:pointer;padding:0;">× 削除</button>
   </div>
 </template>
-
-<!-- モーダル：コメント手動記録 -->
-<div class="modal-overlay" id="addCommentModal">
-  <div class="modal-box">
-    <div class="modal-handle"></div>
-    <div class="modal-title">コメントを記録</div>
-    <label>チャンネル</label>
-    <select id="commentChannel"></select>
-
-    <!-- AIパース説明 -->
-    <div style="background:rgba(155,138,251,.07);border:1px solid rgba(155,138,251,.2);border-radius:8px;padding:10px 12px;margin-bottom:10px;">
-      <div style="font-size:12px;font-weight:600;color:var(--purple);margin-bottom:3px;">🤖 コメントを貼るだけで自動で履歴になります</div>
-      <div style="font-size:11.5px;color:var(--dim);line-height:1.6;">TikTok・ニコニコのコメント画面をコピーして「貼り付けAI解析」タブに貼り付けると、AIが自動でコメント・スパチャを判定して一括記録できます。</div>
-    </div>
-    <div style="display:flex;gap:4px;background:var(--panel2);border-radius:8px;padding:3px;margin-bottom:10px;">
-      <div id="commentModeManual" class="auth-tab active" onclick="switchCommentMode('manual')" style="background:var(--pink);color:#fff;">手動入力</div>
-      <div id="commentModePaste" class="auth-tab" onclick="switchCommentMode('paste')">貼り付けAI解析</div>
-    </div>
-
-    <!-- 手動入力モード -->
-    <div id="commentManualMode">
-      <label>動画タイトル</label>
-      <input type="text" id="commentVideoTitle" placeholder="配信・動画タイトル">
-      <label>コメント内容</label>
-      <textarea id="commentText" placeholder="送ったコメントを入力..." style="min-height:80px;"></textarea>
-      <label>種類</label>
-      <select id="commentType">
-        <option value="comment">💬 コメント</option>
-        <option value="superchat">💰 スパチャ</option>
-        <option value="bits">🎮 Bits（Twitch）</option>
-      </select>
-      <label>金額（スパチャの場合）</label>
-      <input type="number" id="commentAmount" placeholder="0" min="0">
-      <label>日時</label>
-      <input type="datetime-local" id="commentDate">
-    </div>
-
-    <!-- AIパースモード -->
-    <div id="commentPasteMode" style="display:none;">
-      <div style="background:rgba(155,138,251,.08);border:1px solid rgba(155,138,251,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--purple);margin-bottom:10px;line-height:1.6;">
-        TikTok・ニコニコのコメント画面をスクショしてテキスト化、またはコメント一覧をそのままコピー＆ペーストしてください。AIが自動で解析します。
-      </div>
-      <label>プラットフォーム</label>
-      <select id="pasteplatform" style="margin-bottom:10px;">
-        <option value="youtube">YouTube</option>
-        <option value="twitch">Twitch</option>
-        <option value="tiktok">TikTok</option>
-        <option value="niconico">ニコニコ生放送</option>
-        <option value="other">その他</option>
-      </select>
-      <label>コメントデータを貼り付け</label>
-      <textarea id="commentPasteText" placeholder="コメント一覧をここに貼り付け...&#10;例）&#10;13:24 ありがとうございます！&#10;13:25 最高だった！&#10;13:26 ¥500 スパチャ送ります" style="min-height:120px;"></textarea>
-      <button class="primary full" id="parseBtn" onclick="parseCommentWithAI()" style="margin-bottom:10px;">AIで解析する ✨</button>
-      <div id="parseResult" style="display:none;">
-        <div style="font-size:11px;color:var(--dim);margin-bottom:6px;">解析結果（編集可能）</div>
-        <div id="parseResultList"></div>
-      </div>
-    </div>
-
-    <div style="display:flex;gap:8px;margin-top:4px;">
-      <button class="ghost" onclick="closeModal('addCommentModal')">キャンセル</button>
-      <button class="primary" style="flex:1;" id="commentSubmitBtn" onclick="addComment()">記録する</button>
-    </div>
-  </div>
-</div>
 
 <!-- モーダル：スケジュール追加 -->
 <div class="modal-overlay" id="addScheduleModal">
@@ -1099,6 +1007,8 @@ async function onLogin(u){
     if(di)di.value=ud2.display_name||'';
     const ui=document.getElementById('usernameInput');
     if(ui)ui.value=ud2.username||'';
+    // アバター画像を読み込む
+    if(ud2.avatar_url)setAvatarUI(ud2.avatar_url);
     updatePlanUI(ud2);
     // PDF用チャンネルセレクトはloadChannels後に更新
   }
@@ -1294,7 +1204,7 @@ async function addChannel(){
   if(!pid||!name){toast('チャンネルIDと名前を入力してください');return;}
   const oshiCnt=AChans.filter(c=>c.tier==='oshi').length;
   if(tier==='oshi'){
-    if(CPlan==='free'&&oshiCnt>=1){toast('フリープランは推しを1人まで');return;}
+    if(CPlan==='free'&&oshiCnt>=3){toast('フリープランは推しを3人まで');return;}
     if(CPlan==='standard'&&oshiCnt>=5){toast('スタンダードは推しを5人まで');return;}
   }
   const{data:ch,error:ce}=await sb.from('channels').upsert({platform:pf,platform_channel_id:pid,name},{onConflict:'platform,platform_channel_id'}).select().single();
@@ -1386,7 +1296,7 @@ function openChDetail(ucId){
 async function changeTier(ucId,tier,btn){
   const oc=AChans.filter(c=>c.tier==='oshi'&&c.id!==ucId).length;
   if(tier==='oshi'){
-    if(CPlan==='free'&&oc>=1){toast('フリープランは推しを1人まで');return;}
+    if(CPlan==='free'&&oc>=1){toast('フリープランは推しを3人まで');return;}
     if(CPlan==='standard'&&oc>=5){toast('スタンダードは推しを5人まで');return;}
   }
   await sb.from('user_channels').update({tier}).eq('id',ucId);
@@ -1530,20 +1440,24 @@ function switchLogTab(tab,el){
 function openLogAddByTab(){
   if(CPlan==='free'){toast('推し活ログはプレミアムプランの機能です');return;}
   const now=new Date(Date.now()+9*60*60*1000).toISOString().split('T')[0];
-  const modals={watch:'addWatchModal',charge:'addChargeModal',goods:'addGoodsModal',memo:'addMemoModal'};
-  const dates={watch:'watchDate',charge:'chargeDate',goods:'goodsDate',memo:'memoDate'};
-  const modal=modals[CLogTab]||'addWatchModal';
-  const dateId=dates[CLogTab]||'watchDate';
-  const el=document.getElementById(dateId);if(el)el.value=now;
-  if(CLogTab==='watch'){
+  if(CLogTab==='watch'||CLogTab==='all'){
+    document.getElementById('watchDate').value=now;
     document.getElementById('watchCommentList').innerHTML='';
     document.getElementById('watchUrl').value='';
     document.getElementById('watchTitle').value='';
+    openModal('addWatchModal');
+  } else if(CLogTab==='charge'){
+    document.getElementById('chargeDate').value=now;
+    openModal('addChargeModal');
+  } else if(CLogTab==='goods'){
+    document.getElementById('goodsDate').value=now;
+    openModal('addGoodsModal');
+  } else if(CLogTab==='memo'){
+    document.getElementById('memoDate').value=now;
+    openModal('addMemoModal');
   }
-  openModal(modal);
 }
 
-// タブ別フィルター適用
 async function loadLogs(){
   if(!CU)return;
   const cf=document.getElementById('logFilterChannel')?.value||'';
@@ -1562,7 +1476,6 @@ async function loadLogs(){
   document.getElementById('logTotalAmount').textContent='¥'+amt.toLocaleString();
   const cc=document.getElementById('logCommentCount');if(cc)cc.textContent=commentLogs.length;
   const rc=document.getElementById('logReadCount');if(rc)rc.textContent=readLogs.length;
-
   loadYearGraph();
 
   // タブフィルター
@@ -1574,16 +1487,14 @@ async function loadLogs(){
 
   const el=document.getElementById('logList');if(!el)return;
   if(!filtered.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📝</div>まだログがありません</div>`;return;}
-
   el.innerHTML=filtered.map(l=>{
-    const isComment=l.comment_text;
     const readBadge=l.comment_read?`<span class="read-badge">✅ 読まれた${l.comment_read_at?' '+l.comment_read_at:''}</span>`:'';
     return`<div class="log-item">
       <div class="log-type-icon ${l.log_type||'other'}">${liIcon(l.log_type)}</div>
       <div class="log-info">
         <div class="log-title">${esc(l.video_title||l.title||l.goods_name||liLbl(l.log_type))}</div>
         <div class="log-meta">${l.channels?.name||''} · ${fmtD(l.logged_at)}</div>
-        ${isComment?`<div style="font-size:12px;color:var(--dim);margin-top:3px;">💬 ${esc(l.comment_text)}${l.comment_sent_at?' ('+l.comment_sent_at+')':''}</div>${readBadge}`:''}
+        ${l.comment_text?`<div style="font-size:12px;color:var(--dim);margin-top:3px;">💬 ${esc(l.comment_text)}${l.comment_sent_at?' ('+l.comment_sent_at+')':''}</div>${readBadge}`:''}
         ${l.comment_memo?`<div style="font-size:11px;color:var(--dim2);margin-top:2px;">${esc(l.comment_memo)}</div>`:''}
       </div>
       ${l.amount?`<div class="log-amount">¥${l.amount.toLocaleString()}</div>`:''}
@@ -1592,18 +1503,21 @@ async function loadLogs(){
   }).join('');
 }
 
+function openAddLogModal(){openLogAddByTab();}
+async function addLog(){}
+
 // ── コメント行追加 ──
 function addCommentRow(){
   const tpl=document.getElementById('commentRowTpl');
+  if(!tpl)return;
   const row=tpl.content.cloneNode(true);
-  // 読まれたチェックで時間欄を有効化
   const cb=row.querySelector('.comment-read');
   const readAt=row.querySelector('.comment-read-at');
   cb.addEventListener('change',()=>{readAt.disabled=!cb.checked;if(!cb.checked)readAt.value='';});
   document.getElementById('watchCommentList').appendChild(row);
 }
 
-// ── URLからタイトル取得（視聴モーダル用） ──
+// ── URLからタイトル取得 ──
 async function fetchWatchTitle(){
   const url=document.getElementById('watchUrl').value.trim();
   if(!url){toast('URLを入力してください');return;}
@@ -1627,7 +1541,7 @@ async function fetchWatchTitle(){
 
 async function fetchChargeTitle(){
   const url=document.getElementById('chargeUrl').value.trim();
-  if(!url){toast('URLを入力してください');return;}
+  if(!url)return;
   const btn=event.target;btn.disabled=true;btn.textContent='取得中...';
   try{
     const ytMatch=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/live\/)([A-Za-z0-9_-]{11})/);
@@ -1640,8 +1554,6 @@ async function fetchChargeTitle(){
   btn.disabled=false;btn.textContent='取得';
 }
 
-function onWatchUrlInput(v){}
-
 // ── 各記録関数 ──
 async function addWatchLog(){
   const cid=document.getElementById('watchChannel').value;
@@ -1649,17 +1561,13 @@ async function addWatchLog(){
   const url=document.getElementById('watchUrl').value.trim();
   const date=document.getElementById('watchDate').value;
   if(!date){toast('日付を入力してください');return;}
-
-  // 視聴ログを保存
   const{error:e1}=await sb.from('cheer_logs').insert({
     user_id:CU.id,channel_id:cid||null,
     log_type:'watch',title:title||'配信を視聴',
     video_url:url||null,video_title:title||null,
-    logged_at:date+':00+09:00'
+    logged_at:date+'T00:00:00+09:00'
   });
   if(e1){toast('記録に失敗しました');return;}
-
-  // コメント行を個別保存
   const rows=document.querySelectorAll('#watchCommentList .comment-row');
   for(const row of rows){
     const text=row.querySelector('.comment-text').value.trim();
@@ -1677,10 +1585,9 @@ async function addWatchLog(){
       comment_read:read,
       comment_read_at:readAt||null,
       comment_memo:memo||null,
-      logged_at:date+':00+09:00'
+      logged_at:date+'T00:00:00+09:00'
     });
   }
-
   closeModal('addWatchModal');toast('✓ 記録しました');
   document.getElementById('watchUrl').value='';
   document.getElementById('watchTitle').value='';
@@ -1703,7 +1610,7 @@ async function addChargeLog(){
     log_type:type,charge_type:type,
     title:memo||title||null,
     video_url:url||null,video_title:title||null,
-    amount,logged_at:date+':00+09:00'
+    amount,logged_at:date+'T00:00:00+09:00'
   });
   if(error){toast('記録に失敗しました');return;}
   closeModal('addChargeModal');toast('✓ 記録しました');
@@ -1727,7 +1634,7 @@ async function addGoodsLog(){
     user_id:CU.id,channel_id:cid||null,
     log_type:'goods',goods_type:type,
     goods_name:name,title:name,
-    amount,logged_at:date+':00+09:00',
+    amount,logged_at:date+'T00:00:00+09:00',
     comment_memo:memo||null
   });
   if(error){toast('記録に失敗しました');return;}
@@ -1747,7 +1654,7 @@ async function addMemoLog(){
   const{error}=await sb.from('cheer_logs').insert({
     user_id:CU.id,channel_id:cid||null,
     log_type:'memo',title:content.slice(0,50),
-    logged_at:date+':00+09:00'
+    logged_at:date+'T00:00:00+09:00'
   });
   if(error){toast('記録に失敗しました');return;}
   closeModal('addMemoModal');toast('✓ 記録しました');
@@ -1755,9 +1662,6 @@ async function addMemoLog(){
   loadLogs();loadHomeData();
 }
 
-// 旧関数との互換性
-function openAddLogModal(){openLogAddByTab();}
-async function addLog(){}
 
 async function loadComments(){
   if(!CU)return;
@@ -1807,7 +1711,7 @@ async function loadCheerHistory(){
   if(!CU)return;
   const{data}=await sb.from('cheer_messages').select('*,channels(name)').eq('user_id',CU.id).order('sent_at',{ascending:false}).limit(20);
   const el=document.getElementById('cheerHistory');if(!el)return;
-  if(!data?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📣</div>まだ送信していません</div>`;return;}
+  if(!data?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📓</div>まだ記録していません</div>`;return;}
   el.innerHTML=data.map(m=>`<div class="log-item"><div class="log-type-icon watch" style="font-size:18px;">${m.message_type==='stamp'?(m.stamp_emoji||'💜'):'💌'}</div><div class="log-info"><div class="log-title">${m.body?esc(m.body.slice(0,40))+(m.body.length>40?'...':''):(m.stamp_emoji||'スタンプ')}</div><div class="log-meta">${m.channels?.name||''} · ${fmtDT(m.sent_at)}${m.is_anonymous?' · 匿名':''}</div></div></div>`).join('');
 }
 async function loadStampCounts(){
@@ -1847,14 +1751,14 @@ const BETA_PLAN='premium'; // ベータ中は全員プレミアム相当
 // ── 実効プランを取得（ベータ中は底上げ）──
 function effectivePlan(plan){
   if(!IS_BETA)return plan||'free';
-  const order=['free','standard','premium'];
+  const order=['free','ad_free','standard','premium'];
   const a=order.indexOf(plan||'free');
   const b=order.indexOf(BETA_PLAN);
   return order[Math.max(a,b)];
 }
 
 function updatePlanUI(ud){
-  const pn={free:'フリー',standard:'スタンダード',premium:'プレミアム'};
+  const pn={free:'フリー',ad_free:'広告削除',standard:'スタンダード',premium:'プレミアム'};
   const pi=document.getElementById('planInfo');const es=document.getElementById('extensionStatus');
   const basePlan=ud.plan||'free';
   const effPlan=effectivePlan(basePlan);
@@ -1862,7 +1766,7 @@ function updatePlanUI(ud){
   if(pi)pi.innerHTML=`
     ${IS_BETA?`<div style="background:rgba(224,98,158,.07);border:1px solid rgba(224,98,158,.2);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--pink);">🎉 オープンベータ期間中（〜9月末）は<b>全機能を無料</b>でお試しいただけます！</div>`:''}
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <span style="font-size:15px;font-weight:600;">${pn[basePlan]}</span>
+      <span style="font-size:15px;font-weight:600;">${pn[basePlan]||basePlan}</span>
       ${betaBadge}
       ${ud.extension_verified?'<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(69,214,176,.12);color:var(--calm);border:1px solid rgba(69,214,176,.3);">拡張割引 適用中</span>':''}
     </div>`;
@@ -2542,6 +2446,40 @@ function selectEmoji(el,emoji){
 // addChannel関数内でemojiをuser_channelsのmetaに保存（memo列を活用）
 
 // ── プロフィール保存（表示名＋username）──
+async function uploadAvatar(input){
+  const file=input.files[0];
+  if(!file||!CU)return;
+  if(file.size>2*1024*1024){toast('画像は2MB以下にしてください');return;}
+  const ext=file.name.split('.').pop();
+  const path=`${CU.id}/avatar.${ext}`;
+  const btn=document.getElementById('settingsAvatar');
+  btn.innerHTML='⏳';
+  try{
+    const{error:upErr}=await sb.storage.from('avatars').upload(path,file,{upsert:true});
+    if(upErr){toast('アップロードに失敗しました: '+upErr.message);btn.innerHTML='👤';return;}
+    const{data}=sb.storage.from('avatars').getPublicUrl(path);
+    const avatarUrl=data.publicUrl+'?t='+Date.now();
+    // usersテーブルに保存
+    await sb.from('users').update({avatar_url:avatarUrl}).eq('id',CU.id);
+    // UI更新
+    setAvatarUI(avatarUrl);
+    toast('✓ プロフィール画像を更新しました');
+  }catch(e){
+    toast('エラーが発生しました');
+    btn.innerHTML='👤';
+  }
+}
+
+function setAvatarUI(url){
+  const el=document.getElementById('settingsAvatar');
+  if(!el)return;
+  if(url){
+    el.innerHTML=`<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  } else {
+    el.innerHTML='👤';
+  }
+}
+
 async function saveProfile(){
   const name=document.getElementById('displayNameInput').value.trim();
   const uname=document.getElementById('usernameInput').value.trim();
@@ -2549,7 +2487,6 @@ async function saveProfile(){
   if(uname&&!/^[a-zA-Z0-9_]{3,20}$/.test(uname)){toast('ユーザー名は英数字・アンダースコア3〜20文字で入力してください');return;}
   const{error}=await sb.from('users').update({display_name:name,username:uname||null}).eq('id',CU.id);
   if(error){
-    // usernameカラムがまだない場合は表示名のみ保存
     await sb.from('users').update({display_name:name}).eq('id',CU.id);
   }
   document.getElementById('settingsDisplayName').textContent=name;
@@ -2913,13 +2850,18 @@ async function openFanCard(ucId){
     sb.from('cheer_messages').select('id').eq('user_id',CU.id).eq('channel_id',uc.channel_id)
   ]);
   const totalAmt=(logs||[]).reduce((s,l)=>s+(l.amount||0),0);
-  const{data:ud}=await sb.from('users').select('display_name').eq('id',CU.id).single();
+  const{data:ud}=await sb.from('users').select('display_name,avatar_url').eq('id',CU.id).single();
   const fanName=ud?.display_name||CU.email?.split('@')[0]||'ファン';
+  const avatarHtml=ud?.avatar_url
+    ?`<img src="${ud.avatar_url}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;margin:0 auto 8px;display:block;border:2px solid var(--pink);">`
+    :`<div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--purple));display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 8px;">👤</div>`;
   _fcData={chName:ch.name,days:days??0,logCnt:(logs||[]).length,amt:totalAmt,cheerCnt:(cheers||[]).length,ucId};
   document.getElementById('fanCardContent').innerHTML=`
     <div style="background:linear-gradient(135deg,#1A1C26 0%,#20152A 100%);border:1px solid var(--pink);border-radius:16px;padding:24px;text-align:center;">
-      <div style="font-size:10px;color:var(--pink);font-family:'IBM Plex Mono',monospace;letter-spacing:2px;margin-bottom:8px;">FAN CARD</div>
-      <div style="font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:var(--pink);margin-bottom:16px;">${esc(ch.name)}</div>
+      <div style="font-size:10px;color:var(--pink);font-family:'IBM Plex Mono',monospace;letter-spacing:2px;margin-bottom:12px;">FAN CARD</div>
+      ${avatarHtml}
+      <div style="font-size:15px;font-weight:700;margin-bottom:2px;">${esc(fanName)}</div>
+      <div style="font-size:12px;color:var(--pink);margin-bottom:14px;">${esc(ch.name)} ファン</div>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;">
         <div style="background:rgba(255,255,255,.05);border-radius:10px;padding:10px;">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--gold);">${days!==null?days:'?'}<span style="font-size:11px;">日</span></div>
@@ -2938,7 +2880,7 @@ async function openFanCard(ucId){
           <div style="font-size:10px;color:var(--dim);margin-top:2px;">応援回数</div>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--dim);border-top:1px solid var(--border);padding-top:10px;">${esc(fanName)} · ${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}</div>
+      <div style="font-size:11px;color:var(--dim);border-top:1px solid var(--border);padding-top:10px;">CheerDesk · ${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}</div>
     </div>
     <div style="display:flex;gap:8px;margin-top:12px;">
       <button class="ghost" style="flex:1;" onclick="shareToX(_fcData.chName,_fcData.days,_fcData.logCnt,_fcData.amt)">𝕏 でシェア</button>
