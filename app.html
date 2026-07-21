@@ -265,6 +265,12 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
     <div class="card-hd">今月の推し活まとめ <button class="ghost sm" onclick="genMonthlySummary()">生成</button></div>
     <div id="monthlySummaryContent" style="font-size:13px;color:var(--dim);line-height:1.7;">「生成」ボタンで今月の推し活をまとめます。Xにそのまま投稿できます。</div>
   </div>
+
+  <!-- 推し年表 -->
+  <div class="card">
+    <div class="card-hd">推し年表 <span style="font-size:11px;color:var(--dim);">推しとの思い出</span></div>
+    <div id="oshiTimeline"><div class="empty" style="padding:12px 0;"><div class="empty-icon" style="font-size:24px;">📖</div>推し活ログを記録すると年表に表示されます</div></div>
+  </div>
 </div>
 
 <!-- 推しリスト -->
@@ -455,7 +461,16 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pink);outline-of
 
     <!-- プランアップグレードUI -->
     <div id="upgradeUI">
-      <div style="font-size:12px;color:var(--dim);margin-bottom:10px;">プランをアップグレードして推し活をもっと楽しもう。</div>
+      <div style="font-size:12px;color:var(--dim);margin-bottom:10px;">プレミアムにアップグレードして、推しとの思い出をもっと深く残しましょう。</div>
+      <div style="background:rgba(224,98,158,.07);border:1px solid rgba(224,98,158,.2);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+        <div style="font-size:12px;font-weight:600;color:var(--pink);margin-bottom:6px;">💜 プレミアムでできること</div>
+        <div style="font-size:12px;color:var(--dim);line-height:1.8;">
+          💬 コメントが読まれた時刻・反応を永久記録<br>
+          📝 推し活ログ（視聴・スパチャ・グッズ）を一元管理<br>
+          📊 年間費用グラフで推し活の歩みを可視化<br>
+          ⭐ 推しを無制限に登録
+        </div>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
         <div style="background:var(--panel2);border:1px solid var(--calm);border-radius:10px;padding:12px;">
           <div style="font-size:11px;color:var(--calm);font-weight:600;margin-bottom:4px;">広告削除</div>
@@ -998,7 +1013,7 @@ async function onLogin(u){
   if(ud){CPlan=effectivePlan(ud.plan||'free');updatePlanUI(ud);updateUpgradeUI(ud);}
   await loadChannels();
   loadHomeData();renderCal();loadSchedule();loadLogs();loadComments();loadCheerHistory();
-  loadCheerScore();loadYearGraph();
+  loadCheerScore();loadYearGraph();loadOshiTimeline();
   // 設定タブのユーザー情報初期化
   const{data:ud2}=await sb.from('users').select('*').eq('id',u.id).single();
   if(ud2){
@@ -2618,6 +2633,53 @@ async function saveDisplayName(){
   if(error){toast('保存に失敗しました');return;}
   document.getElementById('settingsDisplayName').textContent=name;
   toast('✓ 表示名を保存しました');
+}
+
+// ── 推し年表 ──
+async function loadOshiTimeline(){
+  if(!CU)return;
+  const el=document.getElementById('oshiTimeline');if(!el)return;
+  // 推しチャンネルの記念日・初コメント・最初のログを取得
+  const oshi=AChans.filter(c=>c.tier==='oshi');
+  if(!oshi.length){el.innerHTML='<div class="empty" style="padding:12px 0;"><div class="empty-icon" style="font-size:24px;">📖</div>推しを登録すると年表が表示されます</div>';return;}
+
+  const{data:logs}=await sb.from('cheer_logs')
+    .select('*,channels(name)')
+    .eq('user_id',CU.id)
+    .order('logged_at',{ascending:false})
+    .limit(20);
+
+  // 記念日イベント生成
+  const events=[];
+  oshi.forEach(uc=>{
+    const days=calcDays(uc.followed_since);
+    const ch=uc.channels;
+    if(uc.followed_since) events.push({date:uc.followed_since,icon:'⭐',text:`${ch?.name} を推し始めた`,type:'start'});
+    const anniv=getAnniversary(uc);
+    if(anniv) events.push({date:new Date().toISOString(),icon:anniv.emoji,text:`${ch?.name} を${anniv.msg}`,type:'anniversary'});
+  });
+
+  // ログイベント追加（コメント読まれたもの優先）
+  (logs||[]).filter(l=>l.comment_read||l.log_type==='comment').slice(0,5).forEach(l=>{
+    events.push({date:l.logged_at,icon:'💬',text:`${l.channels?.name||'推し'}への${l.comment_text?`「${l.comment_text.slice(0,15)}...」`:'コメント'}が読まれた`,type:'comment'});
+  });
+
+  // 日付降順でソート
+  events.sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  if(!events.length){el.innerHTML='<div class="empty" style="padding:12px 0;"><div class="empty-icon" style="font-size:24px;">📖</div>推し活ログを記録すると年表に表示されます</div>';return;}
+
+  el.innerHTML=`<div style="position:relative;padding-left:20px;">
+    <div style="position:absolute;left:6px;top:0;bottom:0;width:1px;background:var(--border);"></div>
+    ${events.slice(0,10).map(e=>`
+      <div style="display:flex;gap:10px;margin-bottom:12px;position:relative;">
+        <div style="position:absolute;left:-17px;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:8px;">${e.icon}</div>
+        <div style="flex:1;">
+          <div style="font-size:12px;line-height:1.5;">${esc(e.text)}</div>
+          <div style="font-size:10px;color:var(--dim);margin-top:1px;">${fmtD(e.date)}</div>
+        </div>
+      </div>`).join('')}
+  </div>`;
 }
 
 // ── 推し活スコア ──
